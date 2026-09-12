@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLab — Prenota analisi, esami e visite online</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --hl-white: #ffffff;
+    --hl-900: #0a3a57;
+    --hl-700: #0f6690;
+    --hl-600: #14789f;
+    --hl-500: #1f8fc4;
+    --hl-050: #eaf5fb;
+    --hl-red: #c23b3b;
+    --hl-ink: #16242c;
+    --hl-mute: #5c6b74;
+    --font-display: "Manrope", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); color: var(--hl-ink); overflow-x: hidden; }
+  /* Compensa l'altezza della navbar sticky, così il titolo della sezione
+     non finisce mai nascosto sotto la barra fissa dopo lo scroll */
+  section[id], header[id] { scroll-margin-top: 76px; }
+  h1, h2, h3, .hl-display { font-family: var(--font-display); }
+  a { text-decoration: none; }
+
+  .hl-eyebrow {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--hl-500); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
+  }
+  .hl-eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hl-500); }
+
+  .hl-eyebrow-hero {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--hl-white); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem;
+  }
+  .hl-eyebrow-hero::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hl-white); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ---------- Navbar ---------- */
+  .hl-navbar {
+    position: sticky; top: 0; z-index: 50;
+    background: transparent;   /* il colore arriva dal layer .lg-tint-layer inserito dal motore JS */
+    margin-bottom: -76px;      /* fa iniziare l'hero da y=0, sovrapponendosi sotto la navbar */
+
+    /* Più larga del viewport, ricentrata con margini negativi: le due curve
+       (necessarie all'effetto vetro liquido) finiscono a 100px oltre ciascun bordo dello schermo
+       fuori dalla vista dell'utente */
+    width: calc(100% + 200px);
+    margin-left: -100px;
+    margin-right: -100px;
+
+    border-bottom: none;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.45), 0 12px 30px -18px rgba(10,58,87,0.4);
+    overflow: hidden;
+  }
+
+  /* Sotto i 768px, il .container di Bootstrap è fluido (nessuna max-width
+     fissa, solo padding) — eredita quindi la larghezza 
+     maggiorata di .hl-navbar (+200px), spostando tutto il contenuto verso
+     destra e tagliando il logo sul lato sinistro. Sopra quella soglia, invece,
+     .container ha un max-width fisso, indipendente dalla larghezza reale del
+     genitore, quindi il trucco funziona senza conseguenze. Il raggio degli
+     angoli viene forzato quasi a zero via JS (vedi rebuild())*/
+  @media (max-width: 767.98px) {
+    .hl-navbar { width: 100%; margin-left: 0; margin-right: 0; }
+  }
+
+  /* Regole Liquid Glass per Firefox/Safari (e qualunque browser senza supporto ai filtri SVG
+     dentro backdrop-filter).
+     Solo CSS al posto del motore JS (non funziona su altri browser) */
+  .hl-navbar.no-liquid-glass {
+    background: var(--nav-bg, var(--hl-500));
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+
+  .hl-brand-word {
+    fill: var(--nav-text, #fff);
+    transition: fill 0.15s ease;
+  }  
+  .hl-nav-link { color: var(--nav-text, #fff); }
+
+  .hl-brand { display: flex; align-items: center; gap: 0.6rem; }
+  .hl-brand-mark {
+    width: 36px; height: 36px; border-radius: 9px; background: var(--hl-700);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hl-brand-mark svg { width: 19px; height: 19px; }
+  .hl-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; color: var(--nav-text, #fff); }
+  .hl-nav-link { color: var(--nav-text, #fff); font-weight: 600; font-size: 0.92rem; padding: 0.4rem 0.9rem; }
+  .hl-nav-link:hover { color: var(--hl-700); }
+  .hl-btn-nav {
+    background: var(--hl-700); color: #fff; font-weight: 700; font-size: 0.88rem;
+    padding: 0.55rem 1.15rem; border-radius: 999px; white-space: nowrap;
+  }
+  .hl-btn-nav:hover { background: var(--hl-900); color: #fff; }
+
+  .hl-brand-name, .hl-nav-link {
+    transition: color 0.15s ease;
+  }
+
+  .hl-btn-nav-ghost {
+    background: transparent;
+    color: var(--nav-text, var(--hl-900));
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--nav-text, var(--hl-900));
+    white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .hl-btn-nav-ghost:hover {
+    color: var(--nav-text, var(--hl-900));
+    opacity: 0.75;
+  }
+
+  .hl-mobile-menu-btn {
+    display: none; background: none; border: none; color: var(--nav-text, #fff); font-size: 1.5rem;
+    padding: 0.2rem 0.4rem; margin-left: 0.4rem;
+  }
+  @media (max-width: 991.98px) {
+    .hl-mobile-menu-btn { display: inline-flex; align-items: center; }
+  }
+  .hl-mobile-menu {
+    display: none; flex-direction: column;
+    position: fixed; left: 0; right: 0; z-index: 49; /* sotto la navbar (z-index:50), sopra il resto */
+    background: #fff; box-shadow: 0 16px 32px -12px rgba(10,58,87,0.35);
+  }
+  .hl-mobile-menu.open { display: flex; }
+  .hl-mobile-menu-link { padding: 0.9rem 1.5rem; color: var(--hl-ink); font-weight: 600; font-size: 0.95rem; border-bottom: 1px solid #f0f3f5; }
+  .hl-mobile-menu-link:last-child { border-bottom: none; }
+  .hl-mobile-menu-cta { color: var(--hl-700) !important; font-weight: 800; }
+
+  /* ---------- Hero ---------- */
+  .hl-hero {
+    background: linear-gradient(
+      180deg,
+      var(--hl-500) 0%,
+      var(--hl-050) 45%,
+      #ffffff 100%
+    );
+    padding: calc(4rem + 76px) 0 3rem;
+    position: relative; z-index: 0;
+  }
+  .hl-hero h1 { font-weight: 800; font-size: 2.6rem; line-height: 1.12; color: #f0f6fa; }
+  .hl-hero p.lead { color: var(--hl-700); font-size: 1.20rem; max-width: 46ch; }
+
+  .hl-btn-primary {
+    background: var(--hl-700); color: #fff; font-weight: 700; padding: 0.8rem 1.4rem;
+    border-radius: 999px; border: none; display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .hl-btn-primary:hover { background: var(--hl-900); color: #fff; }
+  .hl-btn-outline {
+    background: #fff; color: var(--hl-900); font-weight: 700; padding: 0.8rem 1.4rem;
+    border-radius: 999px; border: 1.5px solid var(--hl-900); display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .hl-btn-outline:hover { background: var(--hl-050); color: var(--hl-900); }
+
+  .hl-photo-strip {
+    display: flex;
+    gap: 0.85rem;
+    margin-top: 3rem;
+  }
+  .hl-photo-strip img {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    object-fit: cover;
+    border-radius: 14px;
+    box-shadow: 0 8px 16px -10px rgba(10, 58, 87, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hl-photo-strip img:hover {
+    transform: scale(1.04);
+    box-shadow: 0 14px 28px -12px rgba(10, 58, 87, 0.4);
+  }
+  
+  @media (max-width: 768px) {
+    .hl-photo-strip { overflow-x: auto; padding: 0 1.5rem; }
+    .hl-photo-strip img { height: 220px; min-width: 160px; }
+  }
+
+  .hl-next-slot {
+    background: #fff; border: 1px solid #e5edf1; border-radius: 14px; padding: 1.4rem;
+    box-shadow: 0 18px 40px -22px rgba(10, 58, 87, 0.35);
+  }
+  .hl-next-slot .label { font-size: 0.78rem; color: var(--hl-mute); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .hl-next-slot .slot { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; color: var(--hl-900); }
+
+    /* ---------- Come funziona ---------- */
+  .hl-section { padding: 4.5rem 0; }
+  .hl-how-image {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .hl-how-image img {
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    display: block;
+  }
+  .hl-how-badge {
+    position: relative;
+    left: 1.5rem;
+    bottom: 1.5rem;
+    margin-top: -2.5rem;
+    max-width: 220px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+    box-shadow: 0 18px 40px -20px rgba(10, 58, 87, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .hl-how-badge .avatars { display: flex; flex-shrink: 0; }
+  .hl-how-badge .avatars img {
+    width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff;
+    object-fit: cover; margin-left: -10px;
+  }
+  .hl-how-badge .avatars img:first-child { margin-left: 0; }
+  .hl-how-badge .count { font-family: var(--font-display); font-weight: 800; color: var(--hl-900); font-size: 1.05rem; line-height: 1; }
+  .hl-how-badge .label { font-size: 0.76rem; color: var(--hl-mute); }
+
+  .hl-how-steps { display: flex; flex-direction: column; gap: 1.3rem; }
+  .hl-how-step { display: flex; align-items: center; gap: 0.75rem; }
+  .hl-how-step:nth-child(even) { flex-direction: row-reverse; margin-left: 2.5rem; }
+
+  .hl-how-step-num {
+    font-family: var(--font-display); font-weight: 800; font-size: 3rem;
+    color: var(--hl-050); line-height: 1; width: 70px; text-align: center; flex-shrink: 0;
+  }
+  .hl-how-step-card {
+    flex: 1; background: #fff; border: 1px solid #e5edf1; border-radius: 14px;
+    padding: 1rem 1.3rem; display: flex; align-items: center; gap: 1rem;
+    box-shadow: 0 10px 24px -18px rgba(10, 58, 87, 0.25);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .hl-how-step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -16px rgba(10, 58, 87, 0.35);
+  }
+  .hl-how-step-icon {
+    width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 1.15rem; flex-shrink: 0;
+  }
+  .hl-how-step:nth-child(odd) .hl-how-step-icon { background: var(--hl-900); }
+  .hl-how-step:nth-child(even) .hl-how-step-icon { background: var(--hl-500); }
+  .hl-how-step-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
+  .hl-how-step-card p { font-size: 0.85rem; color: var(--hl-mute); margin: 0; }
+
+  @media (max-width: 991px) {
+    .hl-how-step:nth-child(even) { margin-left: 0; flex-direction: row; }
+  }
+
+  /* ---------- Servizi ---------- */
+  .hl-section-alt { background: var(--hl-050); }
+  /* ---------- Servizi (carosello) ---------- */
+.hl-services-nav { display: flex; gap: 0.6rem; }
+.hl-services-nav button {
+  width: 46px; height: 46px; border-radius: 50%; border: none;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+  background: #dde8ee; color: var(--hl-900); flex-shrink: 0;
+}
+.hl-services-nav button.active { background: var(--hl-900); color: #fff; }
+.hl-services-nav button:disabled { opacity: 0.4; }
+
+.hl-services-track {
+  display: flex;
+  gap: 1.2rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+.hl-services-track::-webkit-scrollbar { display: none; }
+.hl-services-track .hl-loading { color: var(--hl-mute); text-align: center; width: 100%; }
+
+
+.hl-service-card2 {
+  position: relative;
+  flex: 0 0 31%;
+  scroll-snap-align: start;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 460px;
+  box-shadow: 0 1px 2px rgba(10,58,87,0.04), 0 14px 30px -20px rgba(10,58,87,0.35);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.hl-service-card2:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(10,58,87,0.08), 0 22px 40px -18px rgba(10,58,87,0.4);
+}
+.hl-service-card2 img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+.hl-service-card2:hover img { transform: scale(1.06); }
+.hl-service-card2::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,58,87,0.85) 0%, rgba(10,58,87,0.15) 55%, transparent 75%);
+}
+.hl-service-card2 .hl-service-tag {
+  position: absolute; top: 1rem; left: 1rem; z-index: 2;
+}
+.hl-service-card2 .body {
+  position: absolute; left: 1.2rem; right: 1.2rem; bottom: 1.2rem; z-index: 2;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem;
+}
+.hl-service-card2 h3 { color: #fff; font-size: 1.15rem; font-weight: 700; margin: 0; }
+.go-btn {
+  width: 42px; height: 42px; border-radius: 50%; background: #fff; color: var(--hl-900);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.05rem;
+}
+.go-btn:hover { background: var(--hl-050); }
+
+@media (max-width: 991px) {
+  .hl-service-card2 { flex: 0 0 75%; height: 400px; }
+}
+  .hl-service-tag {
+    font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px;
+    display: inline-block; margin-bottom: 0.5rem;
+  }
+  .hl-tag-diretto { background: #e3f5ea; color: #1c7a4a; }
+  .hl-tag-visita { background: #fdecec; color: var(--hl-red); }
+
+  /* ---------- Perché sceglierci ---------- */
+  .hl-why { background: linear-gradient(155deg, var(--hl-700), var(--hl-900)); color: #fff; }
+  .hl-why h2 { color: #fff; }
+  .hl-why .hl-eyebrow { color: #cfe7f4; }
+  .hl-why .hl-eyebrow::before { background: #cfe7f4; }
+  .hl-why-item { display: flex; gap: 0.85rem; padding: 0.9rem 0; border-radius: 12px; transition: background 0.18s ease, padding-left 0.18s ease; }
+  .hl-why-item:hover { background: rgba(255,255,255,0.06); padding-left: 0.6rem; }
+  .hl-why-item:hover i { color: #fff; }
+
+  .hl-stat-num {
+    font-family: var(--font-display); font-weight: 800; font-size: 2rem; letter-spacing: -0.02em;
+    color: var(--hl-900); transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .hl-stat-label { font-size: 0.8rem; color: var(--hl-mute); margin-top: 0.2rem; }
+  .col-4.text-center { transition: transform 0.2s ease; cursor: default; }
+  .col-4.text-center:hover .hl-stat-num { transform: scale(1.08); color: var(--hl-700); }
+  .hl-why-item i { font-size: 1.25rem; color: #cfe7f4; flex-shrink: 0; transition: color 0.18s ease; }
+  .hl-why-item h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.15rem; }
+  .hl-why-item p { font-size: 0.85rem; color: #d7e9f2; margin: 0; }
+
+  /* ---------- Footer ---------- */
+  .hl-footer { background: #06263a; color: #b9cbd4; padding: 3rem 0 1.5rem; font-size: 0.88rem; }
+  .hl-footer h5 { color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; margin-bottom: 0.9rem; }
+  .hl-footer a { color: #b9cbd4; }
+  .hl-footer a:hover { color: #fff; }
+  .hl-footer-bottom { border-top: 1px solid #143a4f; padding-top: 1.2rem; margin-top: 2rem; font-size: 0.8rem; color: #7f95a0; }
+</style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="hl-navbar py-2" data-radius="30">
+  <div class="container d-flex align-items-center justify-content-between py-2">
+    <a href="home.html" class="hl-brand">
+      <span class="hl-brand-mark">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 13h4l2-7 3 14 3-10 2 3h6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <svg class="hl-brand-word" viewBox="0 0 128 22" width="116" height="20" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="17" font-family="Manrope, sans-serif" font-weight="800" font-size="19">HealthLab</text>
+      </svg>
+    </a>
+    <div class="d-none d-lg-flex align-items-center">
+      <a href="#chi-siamo" class="hl-nav-link">Chi siamo</a>
+      <a href="#perche" class="hl-nav-link">Perché sceglierci</a>
+      <a href="#come-funziona" class="hl-nav-link">Come funziona</a>
+      <a href="#servizi" class="hl-nav-link">Servizi</a>      
+      <a href="#contatti" class="hl-nav-link">Contatti</a>
+    </div>
+    <div class="d-flex align-items-center">
+      <a href="login.html" class="hl-btn-nav d-none d-lg-inline-flex">Accedi / Registrati</a>
+      <button type="button" class="hl-mobile-menu-btn" id="mobileMenuBtn" aria-label="Apri menu">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="hl-mobile-menu" id="mobileMenu">
+  <a href="#chi-siamo" class="hl-mobile-menu-link">Chi siamo</a>
+  <a href="#perche" class="hl-mobile-menu-link">Perché sceglierci</a>
+  <a href="#come-funziona" class="hl-mobile-menu-link">Come funziona</a>
+  <a href="#servizi" class="hl-mobile-menu-link">Servizi</a>
+  <a href="#contatti" class="hl-mobile-menu-link">Contatti</a>
+  <a href="login.html" class="hl-mobile-menu-link hl-mobile-menu-cta">Accedi / Registrati</a>
+</div>
+<script>
+  (function gestisciMenuMobile() {
+    const btn = document.getElementById('mobileMenuBtn');
+    const menu = document.getElementById('mobileMenu');
+    const navbarEl = document.querySelector('.hl-navbar');
+
+    // La navbar è sticky: la sua posizione reale cambia con lo scroll
+    // (parte più in basso, poi si blocca a y=0)
+    function posiziona() {
+      menu.style.top = navbarEl.getBoundingClientRect().bottom + 'px';
+    }
+
+    btn.addEventListener('click', () => {
+      posiziona();
+      menu.classList.toggle('open');
+    });
+
+    window.addEventListener('resize', () => { if (menu.classList.contains('open')) posiziona(); });
+    window.addEventListener('scroll', () => { if (menu.classList.contains('open')) posiziona(); });
+
+    // Chiude il pannello quando si tocca un link (compreso il salto a un
+    // ancoraggio interno alla stessa pagina, dove altrimenti resterebbe aperto)
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => menu.classList.remove('open'));
+    });
+  })();
+</script>
+
+<!-- ===== HERO ===== -->
+<!-- id="hlPageContentSource": avvolge TUTTO il contenuto sotto la navbar
+     (non solo l'hero) — necessario per l'effetto liquid glass con -moz-element()
+     su Firefox, così l'effetto vetro non si esauriscein un determinato punto della pagina (dopo le prime 5 foto) -->
+<div id="hlPageContentSource">
+<header class="hl-hero" id="hlHeroSource">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <p class="hl-eyebrow-hero">Centro analisi e diagnostica</p>
+        <h1>Prenota analisi, esami e visite senza fare la fila.</h1>
+        <p class="lead mt-3 mb-4">HealthLab ti permette di prenotare online, ricevere i referti appena pronti e gestire ogni appuntamento dal tuo profilo — analisi cliniche, diagnostica strumentale, visite specialistiche e molto altro.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="login.html" class="hl-btn-primary"><i class="bi bi-calendar-check"></i> Prenota ora</a>
+          <a href="#come-funziona" class="hl-btn-outline"><i class="bi bi-play-circle"></i> Come funziona</a>
+        </div>
+      </div>
+      <!--
+      <div class="col-lg-5">
+        ...
+      </div> 
+      -->
+    </div>
+
+    <div class="hl-photo-strip">
+      <img src="img/home/home-hero-1.webp" alt="Operatore sanitario al lavoro">
+      <img src="img/home/home-hero-2.webp" alt="Analisi di laboratorio">
+      <img src="img/home/home-hero-3.webp" alt="Prelievo del sangue">
+      <img src="img/home/home-hero-4.webp" alt="Sala d'attesa del centro">
+      <img src="img/home/home-hero-5.webp" alt="Paziente in visita">
+    </div>
+  </div>
+</header>
+
+<!-- ===== CHI SIAMO ===== -->
+<section class="hl-section" id="chi-siamo">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6">
+        <p class="hl-eyebrow">Chi siamo</p>
+        <h2 class="mb-3" style="color: var(--hl-900); font-weight:800;">Un team di professionisti dedicati a fornire servizi sanitari di qualità</h2>
+        <p style="color: var(--hl-mute);">HealthLab nasce come laboratorio di analisi cliniche con l'obiettivo di offrire un percorso diagnostico chiaro, efficiente e orientato alle esigenze del paziente. Nel corso degli anni abbiamo ampliato la nostra offerta, integrando alla diagnostica di laboratorio servizi di diagnostica strumentale, visite specialistiche e piccola chirurgia ambulatoriale.</p>
+      </div>
+      <div class="col-lg-6">
+        <div class="row g-3">
+          <div class="col-4 text-center">
+            <div class="hl-stat-num">12+</div>
+            <div class="hl-stat-label">Anni di attività</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="hl-stat-num">10k+</div>
+            <div class="hl-stat-label">Pazienti seguiti ogni anno</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="hl-stat-num">3</div>
+            <div class="hl-stat-label">Sedi sul territorio</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PERCHÉ SCEGLIERCI ===== -->
+<section class="hl-section hl-why" id="perche">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <p class="hl-eyebrow">Perché sceglierci</p>
+        <h2 class="mb-3" style="font-weight:800;">Un centro pensato per farti risparmiare tempo</h2>
+        <p style="color:#d7e9f2;">Dalla prenotazione al referto, gestisci tutto online in modo semplice e veloce. Un servizio accurato e affidabile, progettato per semplificare ogni passaggio e aiutarti a risparmiare tempo, senza rinunciare alla comodità.</p>
+      </div>
+      <div class="col-lg-7">
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="hl-why-item"><i class="bi bi-calendar2-check"></i><div><h4>Prenotazione 24/7</h4><p>Prenota quando vuoi, anche fuori dagli orari di sportello.</p></div></div>
+            <div class="hl-why-item"><i class="bi bi-file-earmark-medical"></i><div><h4>Referti online</h4><p>Caricati in piattaforma appena pronti, senza doverli ritirare di persona.</p></div></div>
+            <div class="hl-why-item"><i class="bi bi-shield-check"></i><div><h4>Dati protetti</h4><p>I tuoi dati sono al sicuro con noi.</p></div></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="hl-why-item"><i class="bi bi-geo-alt"></i><div><h4>Più sedi</h4><p>Scegli la sede più comoda<br>per la tua prestazione sanitaria.</p></div></div>
+            <div class="hl-why-item"><i class="bi bi-person-check"></i><div><h4>Percorso guidato</h4><p>Per gli esami che lo richiedono, ti guidiamo nella prenotazione della visita preventiva.</p></div></div>
+            <div class="hl-why-item"><i class="bi bi-headset"></i><div><h4>Assistenza dedicata</h4><p>Rivolgiti alla segreteria: può gestire, modificare o prenotare prestazioni sanitarie per te.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COME FUNZIONA ===== -->
+<section class="hl-section" id="come-funziona">
+  <div class="container">
+    <div class="row g-5 align-items-start">
+
+      <!-- Colonna immagine -->
+      <div class="col-lg-5">
+        <div class="hl-how-image">
+          <img src="img/home/home-come-funziona.webp" alt="Tecnico di laboratorio al lavoro">
+        </div>
+        <div class="hl-how-badge">
+          <div class="avatars">
+            <img src="img/home/home-ritratto-1.webp" alt="">
+            <img src="img/home/home-ritratto-2.webp" alt="">
+            <img src="img/home/home-ritratto-3.webp" alt="">
+          </div>
+          <div>
+            <div class="count">10K+</div>
+            <div class="label">Pazienti serviti</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonna step -->
+      <div class="col-lg-7">
+        <p class="hl-eyebrow">Il nostro processo</p>
+        <h2 class="mb-4" style="color: var(--hl-900); font-weight:800;">Come funziona</h2>
+
+        <div class="hl-how-steps">
+          <div class="hl-how-step">
+            <div class="hl-how-step-num">01</div>
+            <div class="hl-how-step-card">
+              <div class="hl-how-step-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+              <div>
+                <h3>Scegli il servizio</h3>
+                <p>Sfoglia il catalogo per categoria: analisi, esami strumentali, visite specialistiche e molto altro.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="hl-how-step">
+            <div class="hl-how-step-num">02</div>
+            <div class="hl-how-step-card">
+              <div class="hl-how-step-icon"><i class="bi bi-calendar2-check"></i></div>
+              <div>
+                <h3>Prenota lo slot</h3>
+                <p>Scegli data e ora tra quelli disponibili nella sede di tuo interesse.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="hl-how-step">
+            <div class="hl-how-step-num">03</div>
+            <div class="hl-how-step-card">
+              <div class="hl-how-step-icon"><i class="bi bi-person-check"></i></div>
+              <div>
+                <h3>Esegui l'esame</h3>
+                <p>Presentati in sede all'orario prenotato: nessuna attesa, nessuna fila.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="hl-how-step">
+            <div class="hl-how-step-num">04</div>
+            <div class="hl-how-step-card">
+              <div class="hl-how-step-icon"><i class="bi bi-file-earmark-medical"></i></div>
+              <div>
+                <h3>Ritira il referto</h3>
+                <p>Consulta e scarica il referto online, non appena è pronto.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== SERVIZI ===== -->
+<section class="hl-section hl-section-alt" id="servizi">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+      <div>
+        <p class="hl-eyebrow">I nostri servizi</p>
+        <h2 style="color: var(--hl-900); font-weight:800;">Un centro, tutti i tuoi esami</h2>
+      </div>
+      <div class="hl-services-nav">
+        <button type="button" id="svcPrev" aria-label="Servizio precedente"><i class="bi bi-arrow-left"></i></button>
+        <button type="button" id="svcNext" class="active" aria-label="Servizio successivo"><i class="bi bi-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <div class="hl-services-track" id="svcTrack">
+      <p class="hl-loading" style="padding: 2rem 0;">Caricamento servizi…</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="hl-footer" id="contatti">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-3">
+        <div class="hl-brand mb-3">
+          <span class="hl-brand-mark" style="background:#fff;">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 13h4l2-7 3 14 3-10 2 3h6" stroke="#0a3a57" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="hl-brand-name" style="color:#fff;">HealthLab</span>
+        </div>
+        <p>Centro analisi e diagnostica — prenotazioni, referti e visite specialistiche in un unico posto.</p>
+      </div>
+      <div class="col-lg-2 col-6">
+        <h5>Servizi</h5>
+        <p><a href="#servizi">Analisi cliniche</a></p>
+        <p><a href="#servizi">Esami strumentali</a></p>
+        <p><a href="#servizi">Visite specialistiche</a></p>
+      </div>
+      <div class="col-lg-2 col-6">
+        <h5>Il centro</h5>
+        <p><a href="#perche">Perché sceglierci</a></p>
+        <p><a href="#come-funziona">Come funziona</a></p>
+        <p><a href="login.html">Accedi</a></p>
+      </div>
+      <div class="col-lg-3 col-6">
+        <h5>Le nostre sedi</h5>
+        <div id="footerSedi">
+          <p class="mb-0"><i class="bi bi-hourglass-split me-2"></i>Caricamento…</p>
+        </div>
+      </div>
+      <div class="col-lg-2 col-6">
+        <h5>Contatti</h5>
+        <p><i class="bi bi-envelope me-2"></i>info@healthlab.it</p>
+      </div>
+    </div>
+    <div class="hl-footer-bottom text-center">
+      &copy; 2026 Giancarlo Dileo — Piattaforma di gestione servizi sanitari per tesi di laurea presso Università Telematica Pegaso. Anno accademico 2025/2026. </div>
+  </div>
+</footer>
+</div>
+<!-- fine di #hlPageContentSource -->
+
+  <script>
+
+    // ---------- Sedi ----------
+    // essendo una pagina pubblica, non utilizziamo axios (che richiede un token) ma solo fetch() per una GET.
+    // L'endpoint /api/sedi è pubblico (vedi SecurityConfig).
+    (function caricaSediFooter() {
+      const API_BASE_URL = 'http://localhost:8080/api';
+      const contenitoreSedi = document.getElementById('footerSedi');
+
+      function escapeHtml(testo) {
+        const div = document.createElement('div');
+        div.textContent = testo ?? '';
+        return div.innerHTML;
+      }
+
+      fetch(`${API_BASE_URL}/sedi`)
+        .then(res => {
+          if (!res.ok) throw new Error('Risposta non valida');
+          return res.json();
+        })
+        .then(sedi => {
+          if (!sedi.length) {
+            contenitoreSedi.innerHTML = '<p class="mb-0">Nessuna sede disponibile al momento.</p>';
+            return;
+          }
+          // Una riga per sede, formato "Nome - Indirizzo" come richiesto.
+          contenitoreSedi.innerHTML = sedi.map(s => `
+            <p class="mb-1">
+              <i class="bi bi-geo-alt me-2"></i>${escapeHtml(s.nome)}${s.indirizzo ? ' - ' + escapeHtml(s.indirizzo) : ''}
+            </p>
+          `).join('');
+        })
+        .catch(() => {
+          contenitoreSedi.innerHTML = '<p class="mb-0">Impossibile caricare le sedi al momento.</p>';
+        });
+    })();
+
+    // ---------- Carosello servizi ----------
+    // Deriva direttamente da /api/categorie (pubblico, filtra già solo le attive),
+    (function caricaCaroselloServizi() {
+      const API_BASE_URL = 'http://localhost:8080/api';
+      const trackEl = document.getElementById('svcTrack');
+
+      // Queste immagini sono statiche in quanto derivano da inizio progetto
+      //l'admin ha comunque la possibilità di caricare immagini personalizzate per ogni categoria
+      const immaginiFallback = {
+        analisi:     'img/home/home-carousel-analisi.webp',
+        strumentali: 'img/home/home-carousel-strumentali.webp',
+        visite:      'img/home/home-carousel-visite.webp',
+        chirurgia:   'img/home/home-carousel-chirurgia.webp',
+        fisio:       'img/home/home-carousel-fisioterapia.webp'
+      };
+
+      function escapeHtml(testo) {
+        const div = document.createElement('div');
+        div.textContent = testo ?? '';
+        return div.innerHTML;
+      }
+
+      fetch(`${API_BASE_URL}/categorie`)
+        .then(res => {
+          if (!res.ok) throw new Error('Risposta non valida');
+          return res.json();
+        })
+        .then(async (categorie) => {
+          if (!categorie.length) {
+            trackEl.innerHTML = '<p class="hl-loading">Nessun servizio disponibile al momento.</p>';
+            return;
+          }
+
+          // Il tag ("Accesso diretto" / "Previa visita") non è un dato della
+          // categoria in sé — lo deduciamo dal tipo della sua prima
+          // prestazione, stessa logica già usata in prenotazioni.html.
+          const tipi = await Promise.all(
+            categorie.map(c =>
+              fetch(`${API_BASE_URL}/prestazioni/categoria/${c.id}`)
+                .then(r => r.ok ? r.json() : [])
+                .then(lista => lista[0]?.tipo || 'diretta')
+                .catch(() => 'diretta')
+            )
+          );
+
+          trackEl.innerHTML = categorie.map((c, i) => {
+            const tagClass = tipi[i] === 'diretta' ? 'hl-tag-diretto' : 'hl-tag-visita';
+            const tagLabel = tipi[i] === 'diretta' ? 'Accesso diretto' : 'Previa visita';
+            const immagine = c.urlImmagine
+              ? `${API_BASE_URL}${c.urlImmagine}`
+              : (immaginiFallback[c.slug] || '');
+
+            return `
+              <div class="hl-service-card2">
+                <span class="hl-service-tag ${tagClass}">${tagLabel}</span>
+                <img src="${immagine}" alt="${escapeHtml(c.nome)}">
+                <div class="body">
+                  <h3>${escapeHtml(c.nome)}</h3>
+                  <a href="prenotazioni.html?categoria=${encodeURIComponent(c.slug)}" class="go-btn" aria-label="Prenota ${escapeHtml(c.nome)}"><i class="bi bi-arrow-up-right"></i></a>
+                </div>
+              </div>
+            `;
+          }).join('');
+        })
+        .catch(() => {
+          trackEl.innerHTML = '<p class="hl-loading">Impossibile caricare i servizi al momento.</p>';
+        });
+    })();
+
+    // Gestione colore navbar in base allo scroll
+    const hero = document.querySelector('.hl-hero');
+    const root = document.documentElement;
+
+    const COL_500  = [31, 143, 196];
+    const COL_050  = [234, 245, 251];
+    const COL_WHITE = [255, 255, 255];
+
+    // Soglia di scroll (0-1) alla quale il testo scatta da bianco a blu scuro.
+    // 0.3 è sufficientemente chiaro da garantire contrasto.
+    const TEXT_SWITCH_THRESHOLD = 0.3;
+
+    let heroHeight = hero.offsetHeight;
+    window.addEventListener('resize', () => { heroHeight = hero.offsetHeight; });
+
+    function lerpColor(c1, c2, t) {
+      return c1.map((v, i) => Math.round(v + (c2[i] - v) * t));
+    }
+    function getGradientColorAt(progress) {
+      if (progress <= 0.45) return lerpColor(COL_500, COL_050, progress / 0.45);
+      return lerpColor(COL_050, COL_WHITE, (progress - 0.45) / 0.55);
+    }
+
+    let ticking = false;
+    let isDarkText = false; // stato attuale del testo, per non riscrivere il colore ad ogni frame
+
+    function applyNavbarColor() {
+      const progress = Math.min(Math.max(window.scrollY / heroHeight, 0), 1);
+
+      const bg = getGradientColorAt(progress);
+      root.style.setProperty('--nav-bg', `rgb(${bg.join(',')})`);
+
+      // Il motore di vetro liquido inserisce un proprio layer di colore (.lg-tint-layer),
+      // altrimenti sarebbe troppo trasparente e i nav link non si leggerebbero.:
+      // lo teniamo sincronizzato con lo stesso colore calcolato per lo scroll.
+      const tintLayer = document.querySelector('.hl-navbar .lg-tint-layer');
+      if (tintLayer) tintLayer.style.backgroundColor = `rgba(${bg.join(',')}, 0.58)`;
+
+      const borderAlpha = progress > 0.85 ? (progress - 0.85) / 0.15 : 0;
+      root.style.setProperty('--nav-border', `rgba(229,237,241,${borderAlpha})`);
+
+      // Il testo NON viene interpolato: scatta solo quando si supera la soglia,
+      // evitando qualunque tonalità intermedia "grigia" (ricordati il problema incontrato all'inizio con il testo ne bianco, ne blu, ma grigio ).
+      const shouldBeDark = progress > TEXT_SWITCH_THRESHOLD;
+      if (shouldBeDark !== isDarkText) {
+        isDarkText = shouldBeDark;
+        root.style.setProperty('--nav-text', isDarkText ? 'rgb(10,58,87)' : '#ffffff');
+      }
+
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(applyNavbarColor);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    applyNavbarColor();
+
+    // Gestione carosello servizi
+    const track = document.getElementById('svcTrack');
+    const prevBtn = document.getElementById('svcPrev');
+    const nextBtn = document.getElementById('svcNext');
+
+    function scrollByCard(direction) {
+      const card = track.querySelector('.hl-service-card2');
+      const gap = parseFloat(getComputedStyle(track).gap) || 0;
+      const amount = (card.offsetWidth + gap) * direction;
+      track.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', () => scrollByCard(-1));
+    nextBtn.addEventListener('click', () => scrollByCard(1));
+
+  </script>
+
+  <script>
+    // ===== Motore "Liquid Glass" =====
+    // Calcola una vera mappa di rifrazione in base alle dimensioni reali dell'elemento
+    // risolve lo stiramento su forme larghe come una navbar.
+    (function () {
+      'use strict';
+
+      function svgEl(tag, attrs) {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        return el;
+      }
+
+      let defs = null;
+      function ensureDefs() {
+        const old = document.getElementById('lg-defs');
+        if (old) { defs = old; return; }
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '0');
+        svg.setAttribute('height', '0');
+        svg.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:-1;';
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.id = 'lg-defs';
+        svg.appendChild(defs);
+        document.documentElement.appendChild(svg);
+      }
+
+      function surfaceFn(x) { return Math.pow(1 - Math.pow(1 - x, 4), 0.25); }
+
+      function calcRefractionProfile(glassThickness, bezelWidth, ior, samples) {
+        samples = samples || 128;
+        const eta = 1 / ior;
+        function refract(nx, ny) {
+          const dot = ny;
+          const k = 1 - eta * eta * (1 - dot * dot);
+          if (k < 0) return null;
+          const sq = Math.sqrt(k);
+          return [-(eta * dot + sq) * nx, eta - (eta * dot + sq) * ny];
+        }
+        const p = new Float64Array(samples);
+        for (let i = 0; i < samples; i++) {
+          const x = i / samples;
+          const y = surfaceFn(x);
+          const dx = x < 1 ? 0.0001 : -0.0001;
+          const y2 = surfaceFn(x + dx);
+          const deriv = (y2 - y) / dx;
+          const mag = Math.sqrt(deriv * deriv + 1);
+          const ref = refract(-deriv / mag, -1 / mag);
+          p[i] = ref ? ref[0] * ((y * bezelWidth + glassThickness) / ref[1]) : 0;
+        }
+        return p;
+      }
+
+      function generateDisplacementMap(w, h, radius, bezelWidth, profile, maxDisp) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        const img = ctx.createImageData(w, h);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) { d[i] = 128; d[i + 1] = 128; d[i + 2] = 0; d[i + 3] = 255; }
+        const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+        const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+        const wB = w - r * 2, hB = h - r * 2, S = profile.length;
+        for (let y1 = 0; y1 < h; y1++) {
+          for (let x1 = 0; x1 < w; x1++) {
+            const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+            const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+            const dSq = x * x + y * y;
+            if (dSq > r1Sq || dSq < rBSq) continue;
+            const dist = Math.sqrt(dSq);
+            const fromSide = r - dist;
+            const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+            if (op <= 0 || dist === 0) continue;
+            const cos = x / dist, sin = y / dist;
+            const bi = Math.min(((fromSide / bezelWidth) * S) | 0, S - 1);
+            const disp = profile[bi] || 0;
+            const dX = (-cos * disp) / maxDisp, dY = (-sin * disp) / maxDisp;
+            const idx = (y1 * w + x1) * 4;
+            d[idx] = (128 + dX * 127 * op + 0.5) | 0;
+            d[idx + 1] = (128 + dY * 127 * op + 0.5) | 0;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        return c.toDataURL();
+      }
+
+      function generateSpecularMap(w, h, radius, bezelWidth, balanced) {
+        const angle = Math.PI / 3;
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        const img = ctx.createImageData(w, h);
+        const d = img.data; d.fill(0);
+        const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+        const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+        const wB = w - r * 2, hB = h - r * 2;
+        const sv = [Math.cos(angle), Math.sin(angle)];
+        for (let y1 = 0; y1 < h; y1++) {
+          for (let x1 = 0; x1 < w; x1++) {
+            const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+            const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+            const dSq = x * x + y * y;
+            if (dSq > r1Sq || dSq < rBSq) continue;
+            const dist = Math.sqrt(dSq);
+            const fromSide = r - dist;
+            const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+            if (op <= 0 || dist === 0) continue;
+            const cos = x / dist, sin = -y / dist;
+            const dot = balanced ? 1 : Math.abs(cos * sv[0] + sin * sv[1]);
+            const edge = Math.sqrt(Math.max(0, 1 - (1 - fromSide) ** 2));
+            const coeff = dot * edge;
+            const col = (255 * coeff) | 0;
+            const alpha = (col * coeff * op) | 0;
+            const idx = (y1 * w + x1) * 4;
+            d[idx] = col; d[idx + 1] = col; d[idx + 2] = col; d[idx + 3] = alpha;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        return c.toDataURL();
+      }
+
+      function buildFilter(id, w, h, radius, cfg) {
+        const bezel = Math.min(cfg.bezelWidth, radius - 1, Math.min(w, h) / 2 - 1);
+        const profile = calcRefractionProfile(cfg.glassThickness, bezel, cfg.ior, 128);
+        const maxDisp = Math.max(...Array.from(profile).map(Math.abs)) || 1;
+        const dispUrl = generateDisplacementMap(w, h, radius, bezel, profile, maxDisp);
+        const specUrl = generateSpecularMap(w, h, radius, bezel * 2.5, !!cfg.balancedSpecular);
+        const scale = maxDisp * cfg.scaleRatio;
+        const filter = svgEl('filter', {
+          id, x: '0', y: '0', width: String(w), height: String(h),
+          filterUnits: 'userSpaceOnUse', primitiveUnits: 'userSpaceOnUse',
+          'color-interpolation-filters': 'sRGB'
+        });
+        const blur = svgEl('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: cfg.blur, result: 'blurred' });
+        const dispImg = svgEl('feImage', { href: dispUrl, x: 0, y: 0, width: w, height: h, result: 'disp_map' });
+        const dispMap = svgEl('feDisplacementMap', {
+          in: 'blurred', in2: 'disp_map', scale,
+          xChannelSelector: 'R', yChannelSelector: 'G', result: 'displaced'
+        });
+        const sat = svgEl('feColorMatrix', { in: 'displaced', type: 'saturate', values: cfg.specularSat, result: 'displaced_sat' });
+        const spec = svgEl('feImage', { href: specUrl, x: 0, y: 0, width: w, height: h, result: 'spec_layer' });
+        const comp = svgEl('feComposite', { in: 'displaced_sat', in2: 'spec_layer', operator: 'in', result: 'spec_masked' });
+        const tr = svgEl('feComponentTransfer', { in: 'spec_layer', result: 'spec_faded' });
+        tr.appendChild(svgEl('feFuncA', { type: 'linear', slope: cfg.specularOpacity }));
+        const b1 = svgEl('feBlend', { in: 'spec_masked', in2: 'displaced', mode: 'normal', result: 'with_sat' });
+        const b2 = svgEl('feBlend', { in: 'spec_faded', in2: 'with_sat', mode: 'normal' });
+        filter.append(blur, dispImg, dispMap, sat, spec, comp, tr, b1, b2);
+        return filter;
+      }
+
+      function applyGlass(el, cfg) {
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+
+        const refr = document.createElement('div');
+        refr.className = 'lg-refr-layer';
+        refr.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+
+        const tint = document.createElement('div');
+        tint.className = 'lg-tint-layer';
+        tint.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+
+        el.insertBefore(tint, el.firstChild);
+        el.insertBefore(refr, el.firstChild);
+
+        Array.from(el.children).forEach((c) => {
+          if (c === refr || c === tint) return;
+          if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
+          if (!c.style.zIndex) c.style.zIndex = '1';
+        });
+
+        let filterNode = null;
+        let timer = null;
+
+        function rebuild() {
+          ensureDefs();
+          const w = Math.round(el.offsetWidth);
+          const h = Math.round(el.offsetHeight);
+          if (w < 4 || h < 4) return;
+          // Sotto i 768px l'estensione di larghezza è disattivata via CSS
+          // (romperebbe il .container fluido di Bootstrap) — qui, stessa
+          // soglia, forziamo il raggio quasi a zero: senza l'estensione a
+          // nascondere le curve, un raggio di 30px tornerebbe visibile ai
+          // bordi reali dello schermo.
+          const suSchermoStretto = window.innerWidth < 768;
+          const dataR = suSchermoStretto ? 2 : parseFloat(el.getAttribute('data-radius') || '0');
+          const r = Math.max(2, Math.min(dataR || 24, w / 2, h / 2));
+          if (filterNode) filterNode.remove();
+          const id = 'lg-' + Math.random().toString(36).slice(2, 10);
+          filterNode = buildFilter(id, w, h, r, cfg);
+          defs.appendChild(filterNode);
+          refr.style.backdropFilter = `url(#${id})`;
+          refr.style.webkitBackdropFilter = `url(#${id})`;
+        }
+
+        function schedule() { clearTimeout(timer); timer = setTimeout(rebuild, 16); }
+
+        new ResizeObserver(schedule).observe(el);
+        rebuild();
+        window.dispatchEvent(new Event('scroll')); // sincronizza subito il colore della tinta
+      }
+
+      // ===== Tentativo sperimentale per Firefox =====
+      // Firefox non supporta filtri SVG dentro backdrop-filter (limite
+      // ben noto) — ma supporta "filter"
+      // normale con riferimento SVG, e ha -moz-element(), una funzione
+      // proprietaria che permette di usare un altro elemento della pagina
+      // come sorgente "live" per uno sfondo. Qui li combiniamo: l'hero
+      // come sorgente, sincronizzata con lo scroll, con sopra lo stesso
+      // identico filtro (sfocatura + rifrazione + strato speculare) del
+      // motore vero — applicato però con "filter", l'unico dei due che
+      // Firefox renderizza davvero per riferimenti SVG.
+      //
+      // Tecnologia non standard (Mozilla stessa la etichetta come
+      // "experimental technology" e ne sconsiglia l'uso in produzione) —
+      // avvolta in try/catch: se qualcosa non è supportato o fallisce,
+      // resta comunque visibile il vetro smerigliato semplice già
+      // applicato come base sotto questo layer.
+      function applyGlassFirefoxSperimentale(el, sourceElId, cfg) {
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+
+        const refr = document.createElement('div');
+        refr.className = 'lg-refr-layer-moz';
+        refr.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;background-repeat:no-repeat;';
+
+        // Stesso layer di tinta del motore vero, stesso nome di classe
+        // (.lg-tint-layer) — applyNavbarColor() lo cerca genericamente
+        // dentro .hl-navbar e lo tiene sincronizzato con lo scroll da solo,
+        // senza sapere quale dei due motori l'ha creato. Senza questo
+        // layer sopra, il vetro risulta troppo trasparente: si vede la
+        // rifrazione ma manca il "corpo" colorato che dà leggibilità.
+        const tint = document.createElement('div');
+        tint.className = 'lg-tint-layer';
+        tint.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+
+        el.insertBefore(tint, el.firstChild);
+        el.insertBefore(refr, el.firstChild);
+
+        Array.from(el.children).forEach((c) => {
+          if (c === refr || c === tint) return;
+          if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
+          if (!c.style.zIndex) c.style.zIndex = '1';
+        });
+
+        let filterNode = null;
+        let timer = null;
+
+        function aggiornaPosizioneSfondo() {
+          const scrollY = window.scrollY || window.pageYOffset || 0;
+          // Compensa i -100px di margin-left del trucco di larghezza
+          // (disattivato sotto i 768px, vedi rebuild() più sopra) — senza
+          // questo l'immagine "fotografata" risulterebbe spostata di 100px
+          // rispetto a quello che c'è davvero dietro alla barra.
+          const suSchermoStretto = window.innerWidth < 768;
+          const offsetX = suSchermoStretto ? 0 : 100;
+          refr.style.backgroundPosition = `${offsetX}px ${-scrollY}px`;
+
+          // Oltre l'altezza della sorgente non c'è più nulla da "fotografare"
+          const sorgenteEl = document.getElementById(sourceElId);
+          const sorgenteH = sorgenteEl ? sorgenteEl.offsetHeight : Infinity;
+          const distanzaDalLimite = sorgenteH - (scrollY + el.offsetHeight);
+          refr.style.opacity = Math.max(0, Math.min(1, distanzaDalLimite / 150));
+        }
+
+        function rebuild() {
+          ensureDefs();
+          const w = Math.round(el.offsetWidth);
+          const h = Math.round(el.offsetHeight);
+          if (w < 4 || h < 4) return;
+          const suSchermoStretto = window.innerWidth < 768;
+          const dataR = suSchermoStretto ? 2 : parseFloat(el.getAttribute('data-radius') || '0');
+          const r = Math.max(2, Math.min(dataR || 24, w / 2, h / 2));
+          if (filterNode) filterNode.remove();
+          const id = 'lg-moz-' + Math.random().toString(36).slice(2, 10);
+          filterNode = buildFilter(id, w, h, r, cfg);
+          defs.appendChild(filterNode);
+
+          refr.style.filter = `url(#${id})`;
+          refr.style.backgroundImage = `-moz-element(#${sourceElId})`;
+          aggiornaPosizioneSfondo();
+        }
+
+        function schedule() { clearTimeout(timer); timer = setTimeout(rebuild, 16); }
+
+        new ResizeObserver(schedule).observe(el);
+        window.addEventListener('scroll', aggiornaPosizioneSfondo, { passive: true });
+        rebuild();
+
+        // Il layer di tinta (.lg-tint-layer) viene colorato da uno script
+        // che gira testualmente PRIMA di questo blocco — se quello script
+        // ha già fatto la sua unica chiamata iniziale prima che questo
+        // layer esistesse, la tinta resterebbe incolore finché l'utente
+        // non scorre almeno un po'. Un evento scroll sintetico forza quella
+        // sincronizzazione subito, senza aspettare un'azione dell'utente.
+        window.dispatchEvent(new Event('scroll'));
+      }
+
+      // ---- Applicazione alla navbar ----
+      // CSS.supports('backdrop-filter', 'url(#x)') verifica solo che la
+      // SINTASSI sia valida, non che il browser applichi davvero un filtro
+      // SVG referenziato dentro backdrop-filter a runtime. Firefox E Safari
+      // accettano la sintassi (CSS.supports risulta true su entrambi) ma
+      // nessuno dei due la renderizza  (confermato da un bug ufficiale di
+      // WebKit (Safari) oltre a quello, già noto, di Firefox). Un controllo
+      // su user-agent è l'unico modo pratico di intercettare questo scarto tra "sintassi valida" e
+      // "effetto realmente applicato".
+      const ua = navigator.userAgent.toLowerCase();
+      const isFirefox = ua.includes('firefox');
+      // ATTENZIONE: anche lo user-agent di Chrome contiene la
+      // stringa "safari", va escluso esplicitamente,
+      // insieme a Chromium/Edge/Opera, altrimenti ogni browser Chromium
+      // verrebbe scambiato per Safari.
+      const isSafari = ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium')
+        && !ua.includes('edg') && !ua.includes('opr');
+      const supportaFiltroVetro =
+        window.CSS && CSS.supports && CSS.supports('backdrop-filter', 'url(#x)') && !isFirefox && !isSafari;
+
+      if (supportaFiltroVetro) {
+        applyGlass(document.querySelector('.hl-navbar'), {
+          glassThickness: 60,
+          bezelWidth: 28,
+          ior: 1.4,
+          scaleRatio: 1,
+          blur: 1,
+          specularOpacity: 0.55,
+          specularSat: 0,
+          balancedSpecular: false
+        });
+      } else if (isFirefox) {
+        // Base sempre presente: vetro smerigliato semplice, solido e
+        // leggibile a prescindere da come va il tentativo sperimentale sotto.
+        document.querySelector('.hl-navbar').classList.add('no-liquid-glass');
+        try {
+          applyGlassFirefoxSperimentale(document.querySelector('.hl-navbar'), 'hlPageContentSource', {
+            glassThickness: 60,
+            bezelWidth: 28,
+            ior: 1.4,
+            scaleRatio: 1,
+            blur: 1,
+            specularOpacity: 0.55,
+            specularSat: 0,
+            balancedSpecular: false
+          });
+        } catch (e) {
+          // -moz-element() non disponibile o fallito: rimane comunque il
+          // vetro smerigliato semplice già applicato sopra.
+        }
+      } else {
+        // Safari (macOS/iOS) e qualunque altro browser senza supporto:
+        // Carichiamo il vetro smerigliato CSS semplice, che invece funziona bene
+        // ovunque.
+        document.querySelector('.hl-navbar').classList.add('no-liquid-glass');
+      }
+    })();
+  </script>
+
+</body>
+
+<script>
+ 
+  (function adattaPerUtenteLoggato() {
+    const token = localStorage.getItem('healthlab_token');
+    if (!token) return; // utente anonimo: la pagina resta come prima
+
+    const nomeUtente = localStorage.getItem('healthlab_nome') || 'Utente';
+
+    // Script che sostituisce il pulsante Accedi/Registrati con il nome dell'utente loggato
+    const navBtn = document.querySelector('.hl-btn-nav');
+    if (navBtn) {
+      navBtn.textContent = `Ciao, ${nomeUtente}`;
+      navBtn.href = 'home-interna.html';
+      navBtn.classList.remove('hl-btn-nav');
+      navBtn.classList.add('hl-btn-nav-ghost');
+    }
+
+    // 2. Aggiorna tutti i link che oggi puntano a login.html,
+    //    facendoli puntare direttamente all'area riservata
+    document.querySelectorAll('a[href="login.html"]').forEach(link => {
+      link.href = 'home-interna.html';
+    });
+
+    // 3. Personalizzazione per il menu mobile 
+    const mobileNavCta = document.querySelector('.hl-mobile-menu-cta');
+    if (mobileNavCta) {
+      mobileNavCta.textContent = `Ciao, ${nomeUtente}`;
+    }
+  })();
+</script>
+
+</html>

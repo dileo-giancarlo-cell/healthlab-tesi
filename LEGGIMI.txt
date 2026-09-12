@@ -1,0 +1,1 @@
+Si prega di notare che, al fine di garantire un test delle funzionalità al 100%, bisogna aprire il file .env.example presente nella cartella HealthLab, inserire la password così come da indicazioni presenti nel file, quindi rinominare il file in .env (fare attenzione a rimuovere l'eventuale estensione .txt aggiunta automaticamente da Windows).

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLab — Prenota un servizio</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script>
+  // ===== CONTROLLO RUOLO =====
+  // Pagina riservata esclusivamente al Paziente. Tecnico/Medico/Segretario
+  // vengono sempre rimandati alla home interna; 
+  (function guardiaAccessoRuolo() {
+    const token = localStorage.getItem('healthlab_token');
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const ruolo = localStorage.getItem('healthlab_ruolo');
+    const ruoliAmmessi = ['paziente']; // estendere qui quando arriva la sfumatura Admin
+
+    if (!ruoliAmmessi.includes(ruolo)) {
+      window.location.href = 'home-interna.html';
+    }
+  })();
+</script>
+
+<style>
+  :root {
+    --hl-white: #ffffff;
+    --hl-900: #0a3a57;
+    --hl-700: #0f6690;
+    --hl-500: #1f8fc4;
+    --hl-050: #eaf5fb;
+    --hl-red: #c23b3b;
+    --hl-ink: #16242c;
+    --hl-mute: #5c6b74;
+    --hl-page-bg: #f7fafc;
+    --font-display: "Manrope", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; height: 100dvh; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--font-body); color: var(--hl-ink); background: var(--hl-page-bg);
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  a { text-decoration: none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  .hl-topbar {
+    flex: 0 0 auto;
+    background: #fff; border-bottom: none; padding: 0.8rem 0;
+    position: relative; z-index: 5;
+  }
+  .hl-brand { display: flex; align-items: center; gap: 0.6rem; color: var(--hl-900); }
+  .hl-brand-mark {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--hl-700);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hl-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; }
+  .hl-logout { color: var(--hl-mute); font-size: 0.88rem; font-weight: 600; }
+  .hl-logout:hover { color: var(--hl-red); }
+
+  .hl-topnav { gap: 0.2rem; }
+  .hl-topnav-link {
+    color: var(--hl-ink); font-weight: 600; font-size: 0.88rem;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+  }
+  .hl-topnav-link:hover { color: var(--hl-700); }
+  .hl-topnav-link.active { color: var(--hl-700); background: var(--hl-050); font-weight: 700; }
+
+  .hl-mobile-menu-btn {
+    display: none; background: none; border: none; color: var(--hl-900); font-size: 1.3rem;
+    padding: 0.25rem 0.4rem; margin-left: 0.6rem;
+  }
+  @media (max-width: 767.98px) {
+    .hl-mobile-menu-btn { display: inline-flex; align-items: center; }
+  }
+  .hl-mobile-menu { display: none; flex-direction: column; border-top: 1px solid #e5edf1; background: #fff; }
+  .hl-mobile-menu.open { display: flex; }
+  .hl-mobile-menu-link { padding: 0.85rem 1.2rem; color: var(--hl-ink); font-weight: 600; font-size: 0.92rem; border-bottom: 1px solid #f0f3f5; }
+  .hl-mobile-menu-link:last-child { border-bottom: none; }
+  .hl-mobile-menu-link.active { color: var(--hl-700); background: var(--hl-050); font-weight: 700; }
+
+  /* ---------- Hero fotografico ---------- */
+  main.hl-booking-hero {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .hl-bg-image { position: absolute; inset: -3px; z-index: 0; overflow: hidden; }
+  .hl-bg-image img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transform-origin: top center;   /* l'ingrandimento cresce solo verso il basso */
+    transform: scale(1.15);
+    will-change: transform;
+  }
+
+  .hl-bg-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+      radial-gradient(ellipse at center, rgba(247,250,252,0.35) 0%, rgba(247,250,252,0) 45%),
+      linear-gradient(180deg, rgba(247,250,252,0.15) 0%, rgba(247,250,252,0.55) 100%);
+  }
+
+  /* ---------- Card "vetro" centrata ---------- */
+  .hl-glass-card {
+    position: absolute; z-index: 2;
+    left: 50%; top: 50%;
+    transform: translate(-50%, calc(-50% + 10px));
+    width: 92%;
+    max-width: 580px;
+    max-height: 320px;                 /* valore iniziale, ricalcolato via JS */
+    overflow: hidden;                  /* clippa anche i layer del vetro liquido agli angoli arrotondati */
+    display: flex;
+    flex-direction: column;
+    background: transparent;           /* il colore arriva dal layer .lg-tint-layer inserito dal motore */
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 24px;
+    box-shadow: 0 30px 60px -20px rgba(10,58,87,0.5);
+    transition: max-height 0.35s ease;
+  }
+
+  /* Fallback per Firefox/Safari: niente motore, solo effetto vetro smerigliato CSS */
+  .hl-glass-card.no-liquid-glass {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  }
+
+  .hl-card-header {
+    position: relative; z-index: 1;
+    flex: 0 0 auto;               /* non si comprime mai, resta a dimensione naturale */
+    padding: 1.75rem 1.75rem 0;
+  }
+
+  .hl-card-body {
+    position: relative; z-index: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.25rem 1.75rem 1.75rem;
+    scrollbar-width: none;
+
+    transform: translateZ(0);
+    will-change: scroll-position;
+    contain: layout paint;
+
+    mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 24px, black calc(100% - 24px), transparent 100%);
+  }
+  .hl-card-body::-webkit-scrollbar { display: none; }
+
+  .hl-sede-footer {
+    position: relative; z-index: 1;
+    flex: 0 0 auto;
+    padding: 0.9rem 1.75rem 1.1rem;
+    display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+  }
+  .hl-sede-select {
+    flex: 1 1 auto; min-width: 160px;
+    padding: 0.55rem 0.8rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.7); font-family: var(--font-body); font-size: 0.86rem; color: var(--hl-ink);
+  }
+  .hl-sede-btn {
+    flex: 0 0 auto;
+    background: var(--hl-700); color: #fff; border: none; border-radius: 10px;
+    padding: 0.55rem 1rem; font-weight: 700; font-size: 0.84rem; white-space: nowrap;
+  }
+  .hl-sede-btn:hover { background: var(--hl-900); }
+  .hl-sede-btn:disabled { opacity: 0.6; }
+
+  #serviceList { transition: opacity 0.25s ease; }
+
+  .hl-hero-badge {
+    display: inline-block;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 0.28rem 0.75rem; border-radius: 999px; margin-bottom: 0.6rem;
+  }
+
+  .hl-hero-title {
+    font-weight: 800; font-size: 1.7rem; line-height: 1.15; letter-spacing: -0.02em; color: var(--hl-900); margin-bottom: 0.35rem;
+  }
+  .hl-hero-sub { color: var(--hl-mute); font-size: 0.85rem; margin-bottom: 1.1rem; }
+
+  .hl-service-item {
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 12px;
+    margin-bottom: 0.8rem; overflow: hidden;
+  }
+  .hl-service-item:last-child { margin-bottom: 0; }
+  .hl-service-header {
+    padding: 1rem 1.2rem; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+  .hl-service-header h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+  .hl-service-title-row { display: flex; align-items: center; gap: 0.6rem; }
+  .hl-service-tag {
+    font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px;
+    display: inline-block;
+  }
+  .hl-tag-diretto { background: #e3f5ea; color: #1c7a4a; }
+  .hl-tag-visita { background: #fdecec; color: var(--hl-red); }
+  .hl-service-header .chevron { transition: transform 0.15s ease; color: var(--hl-mute); }
+  .hl-service-item.open .chevron { transform: rotate(180deg); }
+
+  .hl-service-detail { display: none; padding: 0 1.2rem 1.2rem; border-top: 1px solid rgba(0,0,0,0.06); }
+  .hl-service-item.open .hl-service-detail { display: block; padding-top: 1rem; }
+
+  .hl-form-row { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .form-control { border: 1px solid #d8e0e5; border-radius: 8px; padding: 0.55rem 0.8rem; font-size: 0.92rem; }
+
+  .hl-btn-primary {
+    background: var(--hl-700); color: #fff; font-weight: 700; padding: 0.65rem 1.2rem;
+    border-radius: 999px; border: none; font-size: 0.9rem;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .hl-btn-primary:hover { background: var(--hl-900); color: #fff; }
+  .hl-btn-primary:active:not(:disabled) { transform: scale(0.97); }
+  .hl-btn-primary:disabled { opacity: 0.6; }
+
+  .hl-alert-success { background: #e3f5ea; color: #1c7a4a; border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.88rem; margin-top: 0.8rem; }
+  .hl-alert-error { background: #fdecec; color: var(--hl-red); border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.88rem; margin-bottom: 1rem; margin-top: 0.8rem; }
+
+  .hl-loading, .hl-empty { text-align: center; color: var(--hl-mute); padding: 1.5rem 0; }
+
+  .hl-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 0.5rem;
+    margin: 0.8rem 0;
+  }
+  .hl-slot {
+    padding: 0.5rem 0.3rem;
+    border: 1px solid #d8e0e5;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--hl-ink);
+  }
+  .hl-slot:hover:not(.occupied) { border-color: var(--hl-700); }
+  .hl-slot.selected { background: var(--hl-700); color: #fff; border-color: var(--hl-700); }
+  .hl-slot.occupied { background: #eef1f3; color: #b0b8bd; cursor: not-allowed; text-decoration: line-through; }
+
+  @media (max-width: 480px) {
+    .hl-glass-card { padding: 1.4rem; }
+    .hl-hero-title { font-size: 1.6rem; }
+  }
+
+  .hl-params-label { font-size: 0.82rem; font-weight: 600; color: var(--hl-mute); margin-bottom: 0.5rem; }
+  .hl-params-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.4rem; margin-bottom: 1rem; }
+  .hl-param-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+  .hl-param-check-all {
+    padding-bottom: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #eef1f3;
+    color: var(--hl-900);
+  }
+  .hl-param-check-all {
+    grid-column: 1 / -1;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .hl-back-btn {
+    position: absolute;
+    z-index: 3;
+    top: 1.5rem;
+    left: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.6);
+    color: var(--hl-900);
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 10px 24px -14px rgba(10,58,87,0.4);
+    transition: background 0.15s ease;
+  }
+  .hl-back-btn:hover {
+    background: rgba(255,255,255,0.75);
+    color: var(--hl-900);
+  }
+  .hl-back-btn i { font-size: 0.95rem; }
+
+  @media (max-width: 480px) {
+    .hl-back-btn { top: 1rem; left: 1rem; padding: 0.5rem 0.9rem; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hl-topbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="home-interna.html" class="hl-brand">
+      <span class="hl-brand-mark">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 13h4l2-7 3 14 3-10 2 3h6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="hl-brand-name">HealthLab</span>
+    </a>
+    <nav class="hl-topnav d-none d-md-flex align-items-center">
+      <a href="home-interna.html" class="hl-topnav-link">Home</a>
+      <a href="prenota.html" class="hl-topnav-link">Prenota</a>
+      <a href="le-mie-prenotazioni.html" class="hl-topnav-link">Le mie prenotazioni</a>
+      <a href="referti.html" class="hl-topnav-link">Referti</a>
+      <a href="profilo.html" class="hl-topnav-link">Mio profilo</a>
+    </nav>
+    <div class="d-flex align-items-center">
+      <a href="#" id="logoutLink" class="hl-logout"><i class="bi bi-box-arrow-right me-1"></i>Esci</a>
+      <button type="button" class="hl-mobile-menu-btn" id="mobileMenuBtn" aria-label="Apri menu">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+  </div>
+  <div class="hl-mobile-menu" id="mobileMenu">
+    <a href="home-interna.html" class="hl-mobile-menu-link">Home</a>
+    <a href="prenota.html" class="hl-mobile-menu-link">Prenota</a>
+    <a href="le-mie-prenotazioni.html" class="hl-mobile-menu-link">Le mie prenotazioni</a>
+    <a href="referti.html" class="hl-mobile-menu-link">Referti</a>
+    <a href="profilo.html" class="hl-mobile-menu-link">Mio profilo</a>
+  </div>
+</div>
+
+<main class="hl-booking-hero">
+  <a href="prenota.html" class="hl-back-btn">
+    <i class="bi bi-arrow-left"></i>
+    Visualizza tutti gli altri servizi
+  </a>
+
+  <div class="hl-bg-image">
+    <img id="categoriaImg" src="" alt="">
+  </div>
+  <div class="hl-bg-overlay"></div>
+
+  <div class="hl-glass-card" id="glassCard" data-radius="24">
+    <div class="hl-card-header" id="cardHeader">
+      <span class="hl-hero-badge" id="heroBadge">Accesso diretto</span>
+      <h1 class="hl-hero-title" id="pageTitle">Prenota un servizio</h1>
+      <p class="hl-hero-sub" id="pageSub">Seleziona il servizio che desideri prenotare.</p>
+    </div>
+    <div class="hl-card-body" id="cardBody">
+      <div id="serviceList"></div>
+    </div>
+    <div class="hl-sede-footer">
+      <select id="sedeSelect" class="hl-sede-select">
+        <option value="">Caricamento sedi…</option>
+      </select>
+      <button type="button" id="impostaSedeBtn" class="hl-sede-btn">Imposta la sede selezionata</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+<script>
+  const API_BASE_URL = 'http://localhost:8080/api';
+
+  const token = localStorage.getItem('healthlab_token');
+
+  if (!token) {
+    const destinazione = window.location.pathname + window.location.search;
+    window.location.href = `login.html?redirect=${encodeURIComponent(destinazione)}`;
+  }
+
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('healthlab_token');
+    localStorage.removeItem('healthlab_ruolo');
+    localStorage.removeItem('healthlab_id_utente');
+    localStorage.removeItem('healthlab_nome');
+    window.location.href = 'login.html';
+  });
+
+  // Evidenzia nella navbar il link corrispondente alla pagina corrente
+  const currentPage = window.location.pathname.split('/').pop();
+  document.querySelectorAll('.hl-topnav-link, .hl-mobile-menu-link').forEach(link => {
+    if (link.getAttribute('href') === currentPage) {
+      link.classList.add('active');
+    }
+  });
+
+  document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const categoriaSlug = params.get('categoria');
+  const listEl = document.getElementById('serviceList');
+  const glassCard = document.getElementById('glassCard');
+
+  // "Seleziona tutti" per i parametri di un servizio (delegato su listEl,
+  // perché i pannelli dettaglio vengono ricreati ad ogni apertura — un
+  // listener piazzato direttamente su di loro andrebbe perso ogni volta).
+  listEl.addEventListener('change', (e) => {
+    const paramsGrid = e.target.closest('.hl-params-grid');
+    const checkAllLabel = e.target.closest('.hl-param-check-all');
+
+    if (e.target.classList.contains('hl-param-select-all')) {
+      const grid = checkAllLabel.parentElement.querySelector('.hl-params-grid');
+      grid.querySelectorAll('.hl-param-item').forEach(cb => { cb.checked = e.target.checked; });
+
+    } else if (e.target.classList.contains('hl-param-item') && paramsGrid) {
+      const selectAllCb = paramsGrid.parentElement.querySelector('.hl-param-select-all');
+      if (!selectAllCb) return;
+
+      const items = Array.from(paramsGrid.querySelectorAll('.hl-param-item'));
+      const selezionati = items.filter(cb => cb.checked).length;
+
+      if (selezionati === 0) {
+        selectAllCb.checked = false; selectAllCb.indeterminate = false;
+      } else if (selezionati === items.length) {
+        selectAllCb.checked = true; selectAllCb.indeterminate = false;
+      } else {
+        selectAllCb.checked = false; selectAllCb.indeterminate = true;
+      }
+    }
+  });
+
+  // Stato del selettore sede: memorizzato qui perché serve sia al primo
+  // caricamento sia ad ogni ricarica successiva innescata dal pulsante
+  // "Imposta la sede selezionata".
+  let categoriaIdCorrente = null;
+  let sedeSelezionataId = null;
+
+  const immaginiCategoriaFallback = {
+    analisi:       'img/home/home-carousel-analisi.webp',
+    strumentali:   'img/home/home-carousel-strumentali.webp',
+    visite:        'img/home/home-carousel-visite.webp',
+    chirurgia:     'img/home/home-carousel-chirurgia.webp',
+    fisio:         'img/home/home-carousel-fisioterapia.webp',
+    checkup:       'img/home/home-carousel-checkup.webp'
+  };
+
+  function updateCardHeight() {
+    const main = document.querySelector('main.hl-booking-hero');
+    const header = document.getElementById('cardHeader');
+    const footer = document.querySelector('.hl-sede-footer');
+    const maxAllowed = Math.min(Math.max(main.clientHeight * 0.8, 500), main.clientHeight - 20);
+
+    const target = Math.min(header.offsetHeight + listEl.scrollHeight + footer.offsetHeight + 42, maxAllowed);
+    glassCard.style.maxHeight = target + 'px';
+  }
+
+  window.addEventListener('resize', updateCardHeight);
+
+  async function caricaSedi() {
+    const selectEl = document.getElementById('sedeSelect');
+    try {
+      const res = await axios.get(`${API_BASE_URL}/sedi`);
+
+      if (!res.data.length) {
+        selectEl.innerHTML = '<option value="">Nessuna sede disponibile</option>';
+        return;
+      }
+
+      const sediOrdinate = res.data.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+      selectEl.innerHTML = sediOrdinate.map(s => `<option value="${s.id}">${s.nome}</option>`).join('');
+
+      sedeSelezionataId = sediOrdinate[0].id;
+      selectEl.value = sedeSelezionataId;
+
+    } catch (error) {
+      selectEl.innerHTML = '<option value="">Impossibile caricare le sedi</option>';
+    }
+  }
+
+  document.getElementById('impostaSedeBtn').addEventListener('click', async () => {
+    const valore = document.getElementById('sedeSelect').value;
+    sedeSelezionataId = valore ? parseInt(valore, 10) : null;
+    await ricaricaServiziPerSede();
+  });
+
+  async function ricaricaServiziPerSede() {
+    if (!categoriaIdCorrente) return;
+
+    listEl.style.opacity = '0';
+    await new Promise(risolvi => setTimeout(risolvi, 250));
+
+    listEl.innerHTML = '<p class="hl-loading">Caricamento servizi…</p>';
+    updateCardHeight();
+
+    try {
+      const prestazioniRes = await axios.get(`${API_BASE_URL}/prestazioni/categoria/${categoriaIdCorrente}`, {
+        params: { idSede: sedeSelezionataId || undefined }
+      });
+      renderServizi(prestazioniRes.data);
+    } catch (error) {
+      listEl.innerHTML = '<p class="hl-empty">Impossibile caricare i servizi per questa sede.</p>';
+    }
+
+    updateCardHeight();
+    listEl.style.opacity = '1';
+  }
+
+  async function init() {
+    if (!categoriaSlug) {
+      listEl.innerHTML = '<p class="hl-empty">Nessuna categoria selezionata.</p>';
+      updateCardHeight();
+      return;
+    }
+
+    listEl.innerHTML = '<p class="hl-loading">Caricamento servizi…</p>';
+    updateCardHeight();
+
+    try {
+      const categoriaRes = await axios.get(`${API_BASE_URL}/categorie/${categoriaSlug}`);
+      const categoria = categoriaRes.data;
+
+      document.getElementById('categoriaImg').src = categoria.urlImmagine
+        ? `${API_BASE_URL}${categoria.urlImmagine}`
+        : (immaginiCategoriaFallback[categoriaSlug] || '');
+      document.getElementById('categoriaImg').alt = categoria.nome;
+      document.getElementById('pageTitle').textContent = categoria.nome;
+      document.getElementById('pageSub').textContent =
+        `Seleziona il servizio che desideri prenotare nella categoria ${categoria.nome}.`;
+
+      const prestazioniRes = await axios.get(`${API_BASE_URL}/prestazioni/categoria/${categoria.id}`, {
+        params: { idSede: sedeSelezionataId || undefined }
+      });
+      categoriaIdCorrente = categoria.id;
+
+      if (prestazioniRes.data.length) {
+        const primoTipo = prestazioniRes.data[0].tipo;
+        const badgeEl = document.getElementById('heroBadge');
+        if (primoTipo === 'diretta') {
+          badgeEl.textContent = 'Accesso diretto';
+          badgeEl.className = 'hl-hero-badge hl-tag-diretto';
+        } else {
+          badgeEl.textContent = 'Previa visita';
+          badgeEl.className = 'hl-hero-badge hl-tag-visita';
+        }
+      }
+
+      renderServizi(prestazioniRes.data);
+      updateCardHeight();
+
+    } catch (error) {
+      listEl.innerHTML = '<p class="hl-empty"><i class="bi bi-wifi-off d-block mb-2" style="font-size:1.4rem;color:#c7d3da;"></i>Impossibile caricare i servizi. Riprova più tardi.</p>';
+      updateCardHeight();
+    }
+  }
+
+  function renderServizi(prestazioni) {
+    if (!prestazioni.length) {
+      listEl.innerHTML = '<p class="hl-empty"><i class="bi bi-inbox d-block mb-2" style="font-size:1.4rem;color:#c7d3da;"></i>Nessun servizio disponibile in questa categoria.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    prestazioni.forEach((p) => {
+      const item = document.createElement('div');
+      item.className = 'hl-service-item';
+      item.dataset.checked = 'false';
+
+      const tagClass = p.tipo === 'diretta' ? 'hl-tag-diretto' : 'hl-tag-visita';
+      const tagLabel = p.tipo === 'diretta' ? 'Accesso diretto' : 'Previa visita';
+
+      item.innerHTML = `
+        <div class="hl-service-header">
+          <div class="hl-service-title-row">
+            <h3>${p.nome}</h3>
+            <span class="hl-service-tag ${tagClass}">${tagLabel}</span>
+          </div>
+          <i class="bi bi-chevron-down chevron"></i>
+        </div>
+        <div class="hl-service-detail"></div>
+      `;
+
+      const header = item.querySelector('.hl-service-header');
+      header.addEventListener('click', () => toggleService(item, p));
+
+      listEl.appendChild(item);
+    });
+  }
+
+async function toggleService(item, prestazione) {
+  const wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+
+  if (wasOpen) {
+    updateCardHeight();
+    return;
+  }
+
+  const detailEl = item.querySelector('.hl-service-detail');
+
+  if (prestazione.tipo === 'diretta') {
+    detailEl.innerHTML = '<p class="hl-loading" style="padding:1rem 0;">Caricamento…</p>';
+    updateCardHeight();
+
+    try {
+      const serviziRes = await axios.get(`${API_BASE_URL}/prestazioni/${prestazione.id}/servizi`);
+      detailEl.innerHTML = buildBookingForm(prestazione.id, false, null, serviziRes.data);
+      attachBookingHandler(item, detailEl, prestazione.id, true);
+    } catch (error) {
+      detailEl.innerHTML = '<p class="hl-empty">Impossibile caricare il servizio.</p>';
+    }
+    updateCardHeight();
+    return;
+  }
+
+  if (item.dataset.checked === 'true') {
+    updateCardHeight();
+    return;
+  }
+
+  detailEl.innerHTML = '<p class="hl-loading" style="padding:1rem 0;">Verifica in corso…</p>';
+  updateCardHeight();
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/prenotazioni/verifica-autorizzazione`, {
+      params: { idPrestazionePreviaVisita: prestazione.id }
+    });
+
+    item.dataset.checked = 'true';
+
+    if (res.data.autorizzata) {
+      detailEl.innerHTML = buildBookingForm(prestazione.id, false);
+      attachBookingHandler(item, detailEl, prestazione.id, false);
+    } else {
+      detailEl.innerHTML = `
+        <div class="hl-alert-error" style="margin-top:0;">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Per prenotare una <strong>${prestazione.nome}</strong> è necessaria prima una
+          <strong>${res.data.nomeVisitaPropedeutica}</strong>. Prenotala ora:
+        </div>
+        ${buildBookingForm(res.data.idVisitaPropedeutica, true, res.data.nomeVisitaPropedeutica)}
+      `;
+      attachBookingHandler(item, detailEl, res.data.idVisitaPropedeutica, true);
+    }
+    updateCardHeight();
+
+  } catch (error) {
+    detailEl.innerHTML = '<p class="hl-empty">Impossibile verificare la disponibilità. Riprova.</p>';
+    updateCardHeight();
+  }
+}
+
+  function buildBookingForm(idServizio, isVisita, nomeVisita, parametri) {
+    const label = isVisita ? `Prenota la ${nomeVisita}` : 'Conferma prenotazione';
+    const today = new Date().toISOString().split('T')[0];
+
+    const parametriHtml = (parametri && parametri.length) ? `
+      <p class="hl-params-label">Seleziona i parametri desiderati:</p>
+      ${parametri.length >= 2 ? `
+        <label class="hl-param-check hl-param-check-all">
+          <input type="checkbox" class="hl-param-select-all"> <strong>Seleziona tutti</strong>
+        </label>
+      ` : ''}
+      <div class="hl-params-grid">
+        ${parametri.map(p => `
+          <label class="hl-param-check">
+            <input type="checkbox" class="hl-param-item" value="${p.id}"> ${p.nome}
+          </label>
+        `).join('')}
+      </div>
+    ` : '';
+
+    return `
+      ${parametriHtml}
+      <div class="hl-form-row">
+        <input type="date" class="form-control" data-field="data" min="${today}" value="${today}">
+      </div>
+      <div class="hl-slots-grid" data-field="slots">
+        <p class="hl-loading" style="padding:0.5rem 0;">Caricamento slot…</p>
+      </div>
+      <button type="button" class="hl-btn-primary btn-prenota" disabled>
+        <i class="bi bi-calendar-check me-1"></i> ${label}
+      </button>
+      <div class="hl-result"></div>
+    `;
+  }
+
+  function attachBookingHandler(item, detailEl, idServizio, isDiretta) {
+    const dataInput = detailEl.querySelector('[data-field="data"]');
+    const slotsGrid = detailEl.querySelector('[data-field="slots"]');
+    const btn = detailEl.querySelector('.btn-prenota');
+    const selectAllEl = detailEl.querySelector('.param-select-all');
+    const paramCheckboxes = detailEl.querySelectorAll('.hl-param-check:not(.hl-param-check-all) input[type="checkbox"]');
+
+    if (selectAllEl) {
+      selectAllEl.addEventListener('change', () => {
+        paramCheckboxes.forEach(cb => { cb.checked = selectAllEl.checked; });
+      });
+      paramCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          selectAllEl.checked = Array.from(paramCheckboxes).every(c => c.checked);
+        });
+      });
+    }
+    let selectedSlot = null;
+
+    async function loadSlots() {
+      selectedSlot = null;
+      btn.disabled = true;
+      detailEl.querySelector('.hl-result').innerHTML = '';
+      slotsGrid.innerHTML = '<p class="hl-loading" style="padding:0.5rem 0;">Caricamento slot…</p>';
+
+      try {
+        const res = await axios.get(`${API_BASE_URL}/prenotazioni/orari-occupati`, {
+          params: { idServizio, isDiretta, data: dataInput.value, idSede: sedeSelezionataId }
+        });
+        const occupati = res.data;
+        const tutti = generateTimeSlots();
+
+        slotsGrid.innerHTML = tutti.map(slot => {
+          const isOccupato = occupati.includes(slot);
+          return `<button type="button" class="hl-slot ${isOccupato ? 'occupied' : ''}"
+                    data-slot="${slot}" ${isOccupato ? 'disabled' : ''}>${slot}</button>`;
+        }).join('');
+
+        slotsGrid.querySelectorAll('.hl-slot:not(.occupied)').forEach(el => {
+          el.addEventListener('click', () => {
+            slotsGrid.querySelectorAll('.hl-slot').forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedSlot = el.dataset.slot;
+            btn.disabled = false;
+          });
+        });
+        updateCardHeight();
+
+      } catch (error) {
+        slotsGrid.innerHTML = '<p class="hl-empty" style="padding:0.5rem 0;">Impossibile caricare gli slot.</p>';
+        updateCardHeight();
+      }
+    }
+
+    dataInput.addEventListener('change', loadSlots);
+    loadSlots();
+
+    btn.addEventListener('click', () => {
+      if (!selectedSlot) return;
+      prenotaServizio(detailEl, idServizio, isDiretta, btn, dataInput.value, selectedSlot);
+    });
+  }
+
+  function generateTimeSlots() {
+    const slots = [];
+    for (let h = 8; h < 18; h++) {
+      for (const m of [0, 30]) {
+        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+    }
+    return slots;
+  }
+
+  async function prenotaServizio(detailEl, idServizio, isDiretta, btn, dataInput, oraInput) {
+    const resultEl = detailEl.querySelector('.hl-result');
+    resultEl.innerHTML = '';
+
+    const paramsGrid = detailEl.querySelector('.hl-params-grid');
+    const checkboxSelezionati = Array.from(
+      detailEl.querySelectorAll('.hl-param-check:not(.hl-param-check-all) input:checked')
+    ).map(cb => parseInt(cb.value, 10));
+
+    if (paramsGrid && checkboxSelezionati.length === 0) {
+      resultEl.innerHTML = '<div class="hl-alert-error"><i class="bi bi-exclamation-triangle me-1"></i>Seleziona almeno un parametro da analizzare.</div>';
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    const payload = {
+      idPrestazioneDiretta: isDiretta ? idServizio : null,
+      idPrestazionePreviaVisita: isDiretta ? null : idServizio,
+      dataOra: `${dataInput}T${oraInput}:00`,
+      idServiziSelezionati: checkboxSelezionati,
+      idSede: sedeSelezionataId
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Invio in corso…';
+
+    try {
+      await axios.post(`${API_BASE_URL}/prenotazioni`, payload);
+      resultEl.innerHTML = `<div class="hl-alert-success">
+        <i class="bi bi-check-circle me-1"></i>
+        Prenotazione confermata per il ${dataInput} alle ${oraInput}.
+      </div>`;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Errore durante la prenotazione. Riprova.';
+      resultEl.innerHTML = `<div class="hl-alert-error"><i class="bi bi-exclamation-triangle me-1"></i>${message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-calendar-check me-1"></i> Conferma prenotazione';
+    }
+    updateCardHeight();
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  (async () => {
+    await caricaSedi();
+    await init();
+  })();
+</script>
+
+<script>
+  // ===== Motore "Liquid Glass"  =====
+  (function () {
+    'use strict';
+
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+
+    let defs = null;
+    function ensureDefs() {
+      const old = document.getElementById('lg-defs');
+      if (old) { defs = old; return; }
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '0');
+      svg.setAttribute('height', '0');
+      svg.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:-1;';
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.id = 'lg-defs';
+      svg.appendChild(defs);
+      document.documentElement.appendChild(svg);
+    }
+
+    function surfaceFn(x) { return Math.pow(1 - Math.pow(1 - x, 4), 0.25); }
+
+    function calcRefractionProfile(glassThickness, bezelWidth, ior, samples) {
+      samples = samples || 128;
+      const eta = 1 / ior;
+      function refract(nx, ny) {
+        const dot = ny;
+        const k = 1 - eta * eta * (1 - dot * dot);
+        if (k < 0) return null;
+        const sq = Math.sqrt(k);
+        return [-(eta * dot + sq) * nx, eta - (eta * dot + sq) * ny];
+      }
+      const p = new Float64Array(samples);
+      for (let i = 0; i < samples; i++) {
+        const x = i / samples;
+        const y = surfaceFn(x);
+        const dx = x < 1 ? 0.0001 : -0.0001;
+        const y2 = surfaceFn(x + dx);
+        const deriv = (y2 - y) / dx;
+        const mag = Math.sqrt(deriv * deriv + 1);
+        const ref = refract(-deriv / mag, -1 / mag);
+        p[i] = ref ? ref[0] * ((y * bezelWidth + glassThickness) / ref[1]) : 0;
+      }
+      return p;
+    }
+
+    function generateDisplacementMap(w, h, radius, bezelWidth, profile, maxDisp) {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(w, h);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) { d[i] = 128; d[i + 1] = 128; d[i + 2] = 0; d[i + 3] = 255; }
+      const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+      const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+      const wB = w - r * 2, hB = h - r * 2, S = profile.length;
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+          const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+          const dSq = x * x + y * y;
+          if (dSq > r1Sq || dSq < rBSq) continue;
+          const dist = Math.sqrt(dSq);
+          const fromSide = r - dist;
+          const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+          if (op <= 0 || dist === 0) continue;
+          const cos = x / dist, sin = y / dist;
+          const bi = Math.min(((fromSide / bezelWidth) * S) | 0, S - 1);
+          const disp = profile[bi] || 0;
+          const dX = (-cos * disp) / maxDisp, dY = (-sin * disp) / maxDisp;
+          const idx = (y1 * w + x1) * 4;
+          d[idx] = (128 + dX * 127 * op + 0.5) | 0;
+          d[idx + 1] = (128 + dY * 127 * op + 0.5) | 0;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL();
+    }
+
+    function generateSpecularMap(w, h, radius, bezelWidth, balanced) {
+      const angle = Math.PI / 3;
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(w, h);
+      const d = img.data; d.fill(0);
+      const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+      const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+      const wB = w - r * 2, hB = h - r * 2;
+      const sv = [Math.cos(angle), Math.sin(angle)];
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+          const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+          const dSq = x * x + y * y;
+          if (dSq > r1Sq || dSq < rBSq) continue;
+          const dist = Math.sqrt(dSq);
+          const fromSide = r - dist;
+          const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+          if (op <= 0 || dist === 0) continue;
+          const cos = x / dist, sin = -y / dist;
+          const dot = balanced ? 1 : Math.abs(cos * sv[0] + sin * sv[1]);
+          const edge = Math.sqrt(Math.max(0, 1 - (1 - fromSide) ** 2));
+          const coeff = dot * edge;
+          const col = (255 * coeff) | 0;
+          const alpha = (col * coeff * op) | 0;
+          const idx = (y1 * w + x1) * 4;
+          d[idx] = col; d[idx + 1] = col; d[idx + 2] = col; d[idx + 3] = alpha;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL();
+    }
+
+    function buildFilter(id, w, h, radius, cfg) {
+      const bezel = Math.min(cfg.bezelWidth, radius - 1, Math.min(w, h) / 2 - 1);
+      const profile = calcRefractionProfile(cfg.glassThickness, bezel, cfg.ior, 128);
+      const maxDisp = Math.max(...Array.from(profile).map(Math.abs)) || 1;
+      const dispUrl = generateDisplacementMap(w, h, radius, bezel, profile, maxDisp);
+      const specUrl = generateSpecularMap(w, h, radius, bezel * 2.5, !!cfg.balancedSpecular);
+      const scale = maxDisp * cfg.scaleRatio;
+      const filter = svgEl('filter', {
+        id, x: '0', y: '0', width: String(w), height: String(h),
+        filterUnits: 'userSpaceOnUse', primitiveUnits: 'userSpaceOnUse',
+        'color-interpolation-filters': 'sRGB'
+      });
+      const blur = svgEl('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: cfg.blur, result: 'blurred' });
+      const dispImg = svgEl('feImage', { href: dispUrl, x: 0, y: 0, width: w, height: h, result: 'disp_map' });
+      const dispMap = svgEl('feDisplacementMap', {
+        in: 'blurred', in2: 'disp_map', scale,
+        xChannelSelector: 'R', yChannelSelector: 'G', result: 'displaced'
+      });
+      const sat = svgEl('feColorMatrix', { in: 'displaced', type: 'saturate', values: cfg.specularSat, result: 'displaced_sat' });
+      const spec = svgEl('feImage', { href: specUrl, x: 0, y: 0, width: w, height: h, result: 'spec_layer' });
+      const comp = svgEl('feComposite', { in: 'displaced_sat', in2: 'spec_layer', operator: 'in', result: 'spec_masked' });
+      const tr = svgEl('feComponentTransfer', { in: 'spec_layer', result: 'spec_faded' });
+      tr.appendChild(svgEl('feFuncA', { type: 'linear', slope: cfg.specularOpacity }));
+      const b1 = svgEl('feBlend', { in: 'spec_masked', in2: 'displaced', mode: 'normal', result: 'with_sat' });
+      const b2 = svgEl('feBlend', { in: 'spec_faded', in2: 'with_sat', mode: 'normal' });
+      filter.append(blur, dispImg, dispMap, sat, spec, comp, tr, b1, b2);
+      return filter;
+    }
+
+    function applyGlass(el, cfg, tintRgba) {
+      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+
+      const refr = document.createElement('div');
+      refr.className = 'lg-refr-layer';
+      refr.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+
+      const tint = document.createElement('div');
+      tint.className = 'lg-tint-layer';
+      tint.style.cssText = `position:absolute;inset:0;z-index:0;pointer-events:none;background:${tintRgba};`;
+
+      el.insertBefore(tint, el.firstChild);
+      el.insertBefore(refr, el.firstChild);
+
+      Array.from(el.children).forEach((c) => {
+        if (c === refr || c === tint) return;
+        if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
+        if (!c.style.zIndex) c.style.zIndex = '1';
+      });
+
+      let filterNode = null;
+      let timer = null;
+
+      function rebuild() {
+        ensureDefs();
+        const w = Math.round(el.offsetWidth);
+        const h = Math.round(el.offsetHeight);
+        if (w < 4 || h < 4) return;
+        const dataR = parseFloat(el.getAttribute('data-radius') || '0');
+        const r = Math.max(2, Math.min(dataR || 24, w / 2, h / 2));
+        if (filterNode) filterNode.remove();
+        const id = 'lg-' + Math.random().toString(36).slice(2, 10);
+        filterNode = buildFilter(id, w, h, r, cfg);
+        defs.appendChild(filterNode);
+        refr.style.backdropFilter = `url(#${id})`;
+        refr.style.webkitBackdropFilter = `url(#${id})`;
+      }
+
+      function schedule() { clearTimeout(timer); timer = setTimeout(rebuild, 16); }
+
+      new ResizeObserver(schedule).observe(el);
+      rebuild();
+    }
+
+    const supported = window.CSS && CSS.supports && CSS.supports('backdrop-filter', 'url(#x)');
+    const cardEl = document.getElementById('glassCard');
+
+    if (supported) {
+      applyGlass(cardEl, {
+        glassThickness: 40,
+        bezelWidth: 18,
+        ior: 1.4,
+        scaleRatio: 1,
+        blur: 1,
+        specularOpacity: 0.5,
+        specularSat: 0,
+        balancedSpecular: false
+      }, 'rgba(255,255,255,0.55)');
+    } else {
+      cardEl.classList.add('no-liquid-glass');
+    }
+  })();
+</script>
+
+</body>
+</html>

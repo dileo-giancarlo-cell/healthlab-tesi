@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: healthlab-api
+  
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:healthlabtesi@gmail.com}
+    password: ${MAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/healthlab
+    username: app_user
+    password: app_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+server:
+  port: 8080
+
+jwt:
+  secret: cdwq4IgQMpcCOfykVoW9asHbZnNvDmYSl2PJtXKxE81UF65LiGurT3Ah0j7eBzR
+  expiration-ms: 86400000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+  
+healthlab:
+  frontend-url: http://127.0.0.1:5500/healthlab-frontend
+  referti:
+    storage-path: C:/Users/dileo/Desktop/Tesi di laurea/HealthLab/healthlab-api/referti-storage
+  categorie:
+    storage-path: C:/Users/dileo/Desktop/Tesi di laurea/HealthLab/healthlab-api/categoria-immagini-storage

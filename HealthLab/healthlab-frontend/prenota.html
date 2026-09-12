@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLab — Prenota</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script>
+  (function guardiaAccessoRuolo() {
+    const token = localStorage.getItem('healthlab_token');
+    if (!token) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const ruolo = localStorage.getItem('healthlab_ruolo');
+    const ruoliAmmessi = ['paziente'];
+
+    if (!ruoliAmmessi.includes(ruolo)) {
+      window.location.href = 'home-interna.html';
+    }
+  })();
+</script>
+<style>
+  :root {
+    --hl-white: #ffffff;
+    --hl-900: #0a3a57;
+    --hl-700: #0f6690;
+    --hl-500: #1f8fc4;
+    --hl-050: #eaf5fb;
+    --hl-red: #c23b3b;
+    --hl-ink: #16242c;
+    --hl-mute: #5c6b74;
+    --font-display: "Manrope", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: var(--font-body); color: var(--hl-ink); background: #f7fafc; margin: 0; padding-top: 68px; }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+  a { text-decoration: none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  .hl-topbar {
+    background: #fff; border-bottom: 1px solid #e5edf1; padding: 0.8rem 0;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  }
+  .hl-brand { display: flex; align-items: center; gap: 0.6rem; color: var(--hl-900); }
+  .hl-brand-mark {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--hl-700);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hl-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; }
+  .hl-logout { color: var(--hl-mute); font-size: 0.88rem; font-weight: 600; }
+  .hl-logout:hover { color: var(--hl-red); }
+
+  .hl-mobile-menu-btn {
+    display: none; background: none; border: none; color: var(--hl-900); font-size: 1.3rem;
+    padding: 0.25rem 0.4rem; margin-left: 0.6rem;
+  }
+  @media (max-width: 767.98px) {
+    .hl-mobile-menu-btn { display: inline-flex; align-items: center; }
+  }
+  .hl-mobile-menu { display: none; flex-direction: column; border-top: 1px solid #e5edf1; background: #fff; }
+  .hl-mobile-menu.open { display: flex; }
+  .hl-mobile-menu-link { padding: 0.85rem 1.2rem; color: var(--hl-ink); font-weight: 600; font-size: 0.92rem; border-bottom: 1px solid #f0f3f5; }
+  .hl-mobile-menu-link:last-child { border-bottom: none; }
+  .hl-mobile-menu-link.active { color: var(--hl-700); background: var(--hl-050); font-weight: 700; }
+
+  .hl-topnav { gap: 0.2rem; }
+  .hl-topnav-link {
+    color: var(--hl-ink); font-weight: 600; font-size: 0.88rem;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+  }
+  .hl-topnav-link:hover { color: var(--hl-700); }
+  .hl-topnav-link.active { color: var(--hl-700); background: var(--hl-050); font-weight: 700; }
+
+  .hl-page-header { max-width: 1100px; margin: 0 auto; padding: 3rem 1rem 0.5rem; }
+  .hl-page-header h1 { font-weight: 800; font-size: 2rem; letter-spacing: -0.02em; color: var(--hl-900); margin-bottom: 0.35rem; }
+  .hl-page-header p { color: var(--hl-mute); margin: 0; }
+
+  .hl-category-grid { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+  @keyframes hl-fade-in-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hl-category-card {
+    position: relative;
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 220px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 2px rgba(10,58,87,0.04), 0 14px 30px -20px rgba(10,58,87,0.35);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    animation: hl-fade-in-up 0.45s ease both;
+  }
+  .hl-category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(10,58,87,0.08), 0 22px 40px -18px rgba(10,58,87,0.4);
+  }
+  .hl-category-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+  .hl-category-card:hover img { transform: scale(1.06); }
+  .hl-category-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,58,87,0.85) 0%, rgba(10,58,87,0.2) 55%, transparent 75%);
+  }
+  .hl-category-card .body {
+    position: absolute; left: 1.2rem; right: 1.2rem; bottom: 1.1rem; z-index: 2;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem;
+  }
+  .hl-category-card h3 { color: #fff; font-size: 1.15rem; font-weight: 700; margin: 0; }
+  .hl-category-card .go-icon {
+    width: 40px; height: 40px; border-radius: 50%; background: #fff; color: var(--hl-900);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem;
+  }
+
+  .hl-loading, .hl-empty { text-align: center; color: var(--hl-mute); padding: 3rem 0; grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<div class="hl-topbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="home-interna.html" class="hl-brand">
+      <span class="hl-brand-mark">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 13h4l2-7 3 14 3-10 2 3h6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="hl-brand-name">HealthLab</span>
+    </a>
+    <nav class="hl-topnav d-none d-md-flex align-items-center">
+      <a href="home-interna.html" class="hl-topnav-link">Home</a>
+      <a href="prenota.html" class="hl-topnav-link">Prenota</a>
+      <a href="le-mie-prenotazioni.html" class="hl-topnav-link">Le mie prenotazioni</a>
+      <a href="referti.html" class="hl-topnav-link">Referti</a>
+      <a href="profilo.html" class="hl-topnav-link">Mio profilo</a>
+    </nav>
+    <div class="d-flex align-items-center">
+      <a href="#" id="logoutLink" class="hl-logout"><i class="bi bi-box-arrow-right me-1"></i>Esci</a>
+      <button type="button" class="hl-mobile-menu-btn" id="mobileMenuBtn" aria-label="Apri menu">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+  </div>
+  <div class="hl-mobile-menu" id="mobileMenu">
+    <a href="home-interna.html" class="hl-mobile-menu-link">Home</a>
+    <a href="prenota.html" class="hl-mobile-menu-link">Prenota</a>
+    <a href="le-mie-prenotazioni.html" class="hl-mobile-menu-link">Le mie prenotazioni</a>
+    <a href="referti.html" class="hl-mobile-menu-link">Referti</a>
+    <a href="profilo.html" class="hl-mobile-menu-link">Mio profilo</a>
+  </div>
+</div>
+
+<div class="hl-page-header">
+  <h1>Cosa vuoi prenotare?</h1>
+  <p>Scegli una categoria per visualizzare i servizi disponibili.</p>
+</div>
+
+<div class="hl-category-grid">
+  <div class="row" id="categoryGrid">
+    <p class="hl-loading">Caricamento categorie…</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+<script>
+  const API_BASE_URL = 'http://localhost:8080/api';
+
+  const token = localStorage.getItem('healthlab_token');
+  if (!token) {
+    const destinazione = window.location.pathname + window.location.search;
+    window.location.href = `login.html?redirect=${encodeURIComponent(destinazione)}`;
+  }
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('healthlab_token');
+    localStorage.removeItem('healthlab_ruolo');
+    localStorage.removeItem('healthlab_id_utente');
+    localStorage.removeItem('healthlab_nome');
+    window.location.href = 'login.html';
+  });
+
+  const currentPage = window.location.pathname.split('/').pop();
+  document.querySelectorAll('.hl-topnav-link, .hl-mobile-menu-link').forEach(link => {
+    if (link.getAttribute('href') === currentPage) {
+      link.classList.add('active');
+    }
+  });
+
+  document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+
+  // Fallback per le categorie del seed originale senza immagine ancora
+  // caricata tramite il nuovo pannello Admin — stessa logica di prenotazioni.html.
+  const immaginiCategoriaFallback = {
+    analisi:       'img/home/home-carousel-analisi.webp',
+    strumentali:   'img/home/home-carousel-strumentali.webp',
+    visite:        'img/home/home-carousel-visite.webp',
+    chirurgia:     'img/home/home-carousel-chirurgia.webp',
+    fisio:         'img/home/home-carousel-fisioterapia.webp',
+    checkup:       'img/home/home-carousel-checkup.webp'
+  };
+
+  async function init() {
+    const gridEl = document.getElementById('categoryGrid');
+
+    try {
+      const res = await axios.get(`${API_BASE_URL}/categorie`);
+      const categorie = res.data;
+
+      if (!categorie.length) {
+        gridEl.innerHTML = '<p class="hl-empty">Nessuna categoria disponibile al momento.</p>';
+        return;
+      }
+
+      gridEl.innerHTML = categorie.map((c, i) => `
+        <div class="col-md-4 col-sm-6">
+          <a href="prenotazioni.html?categoria=${c.slug}" class="hl-category-card" style="animation-delay: ${Math.min(i * 0.06, 0.3)}s;">
+            <img src="${c.urlImmagine ? API_BASE_URL + c.urlImmagine : (immaginiCategoriaFallback[c.slug] || '')}" alt="${c.nome}">
+            <div class="body">
+              <h3>${c.nome}</h3>
+              <span class="go-icon"><i class="bi bi-arrow-up-right"></i></span>
+            </div>
+          </a>
+        </div>
+      `).join('');
+
+    } catch (error) {
+      gridEl.innerHTML = '<p class="hl-empty">Impossibile caricare le categorie. Riprova più tardi.</p>';
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthLab — Accedi</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --hl-white: #ffffff;
+    --hl-900: #0a3a57;
+    --hl-700: #0f6690;
+    --hl-500: #1f8fc4;
+    --hl-050: #eaf5fb;
+    --hl-red: #c23b3b;
+    --hl-ink: #16242c;
+    --hl-mute: #5c6b74;
+    --hl-page-bg: #f7fafc;
+    --font-display: "Manrope", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--font-body); color: var(--hl-ink); background: var(--hl-page-bg);
+  }
+  h1, h2, h3 { font-family: var(--font-display); }
+  a { text-decoration: none; }
+
+  .hl-topbar {
+    flex: 0 0 auto;
+    background: #fff; padding: 0.8rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .hl-brand { display: flex; align-items: center; gap: 0.6rem; color: var(--hl-900); }
+  .hl-brand-mark {
+    width: 34px; height: 34px; border-radius: 9px; background: var(--hl-700);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hl-brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; }
+  .hl-back-home { color: var(--hl-mute); font-size: 0.88rem; font-weight: 600; }
+  .hl-back-home:hover { color: var(--hl-700); }
+
+  /* ---------- Hero fotografico ---------- */
+  main.hl-login-hero {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .hl-bg-image { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+  .hl-bg-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .hl-bg-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+      radial-gradient(ellipse at center, rgba(247,250,252,0.35) 0%, rgba(247,250,252,0) 45%),
+      linear-gradient(180deg, rgba(247,250,252,0.15) 0%, rgba(247,250,252,0.55) 100%);
+  }
+
+  /* ---------- Card "vetro" centrata ---------- */
+  .hl-glass-card {
+    position: absolute; z-index: 2;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 380px;
+    max-height: 88vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;       /* Firefox */
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 20px;
+    box-shadow: 0 30px 60px -20px rgba(10,58,87,0.5);
+    padding: 1.5rem 1.5rem;
+  }
+  .hl-glass-card::-webkit-scrollbar { display: none; }   /* Chrome/Safari/Edge */
+  .hl-glass-card.hl-wide { max-width: 460px; }
+
+  .hl-glass-card.no-liquid-glass {
+    background: rgba(255,255,255,0.62);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+  }
+
+  .hl-glass-card > * { position: relative; z-index: 1; }
+
+  .hl-hero-badge {
+    display: inline-block;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 0.22rem 0.65rem; border-radius: 999px; margin-bottom: 0.6rem;
+    background: var(--hl-050); color: var(--hl-700);
+  }
+  .hl-hero-title {
+    font-weight: 800; font-size: 1.4rem; line-height: 1.15; color: var(--hl-900); margin-bottom: 0.25rem;
+  }
+  .hl-hero-sub { color: var(--hl-mute); font-size: 0.82rem; margin-bottom: 1rem; }
+
+  .hl-field { margin-bottom: 0.75rem; }
+  .hl-field-last { margin-bottom: 1rem; }
+
+  .form-label { font-size: 0.78rem; font-weight: 600; color: var(--hl-ink); margin-bottom: 0.25rem; }
+  .form-control, .form-select {
+    border: 1px solid #d8e0e5; border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.88rem;
+    background: rgba(255,255,255,0.7);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--hl-500);
+    box-shadow: 0 0 0 3px rgba(31,143,196,0.18);
+    background: #fff;
+  }
+  .form-control.field-error, .form-select.field-error {
+    border-color: var(--hl-red);
+    box-shadow: 0 0 0 3px rgba(194,59,59,0.12);
+  }
+
+  .hl-btn-primary {
+    background: var(--hl-700); border: none; color: #fff;
+    padding: 0.6rem 1rem; border-radius: 999px; font-weight: 700; font-size: 0.88rem;
+    width: 100%; transition: background 0.15s ease;
+  }
+  .hl-btn-primary:hover { background: var(--hl-900); }
+  .hl-btn-primary:disabled { opacity: 0.65; }
+
+  .hl-alert {
+    display: none;
+    background: #fdecec; border: 1px solid #f3c6c6; color: var(--hl-red);
+    border-radius: 8px; padding: 0.55rem 0.8rem; font-size: 0.82rem; margin-bottom: 0.9rem;
+  }
+  .hl-alert.show { display: block; }
+  .hl-alert-success {
+    display: none;
+    background: #e3f5ea; border: 1px solid #b8e0c4; color: #1c7a4a;
+    border-radius: 8px; padding: 0.7rem 0.85rem; font-size: 0.85rem; margin-bottom: 0.9rem;
+  }
+  .hl-alert-success.show { display: block; }
+
+  .hl-footer-link { font-size: 0.8rem; text-align: center; margin-top: 0.7rem; color: var(--hl-mute); }
+  .hl-footer-link a, .hl-footer-link button {
+    color: var(--hl-700); font-weight: 700; background: none; border: none; padding: 0;
+    font-size: inherit; font-family: inherit; cursor: pointer;
+  }
+  .hl-footer-link a:hover, .hl-footer-link button:hover { text-decoration: underline; }
+  .hl-footer-links-sep { border-top: 1px solid rgba(0,0,0,0.08); margin-top: 0.9rem; padding-top: 0.15rem; }
+
+  /* ---------- Pannelli ----------
+  si sovrappongono, non si impilano 
+  */
+  #authPanelsWrapper {
+    position: relative;
+    overflow: hidden;
+    transition: height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hl-auth-panel {
+    position: absolute;
+    top: 0; left: 0; width: 100%;
+    transition: opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1), transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hl-auth-panel.hl-panel-hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+  }
+
+  /* ---------- Registrazione: ----------
+    Rispetto a login e password dimenticata, la registrazione ha più campi e quindi vi è lo scroll interno. */
+  #panelRegister {
+    display: flex;
+    flex-direction: column;
+  }
+  .hl-panel-fixed-header {
+    flex: 0 0 auto;
+  }
+  .hl-panel-scroll-body {
+    flex: 1 1 auto;
+    max-height: 62vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    padding-bottom: 6px;
+    
+    mask-image: linear-gradient(to bottom, transparent 0, black 20px, black calc(100% - 20px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 20px, black calc(100% - 20px), transparent 100%);
+  }
+  .hl-panel-scroll-body::-webkit-scrollbar { display: none; }
+
+  /* ---------- Password: pulsante mostra/nascondi + checklist dal vivo ----------
+     Il pulsante mostra/nascondi è oggi una pratica raccomandata (anche dalle
+     linee guida NIST) — impedire di vedere la password non la rende più
+     sicura, aumenta solo il rischio di errori di battitura. La checklist dà
+     un riscontro immediato invece di scoprire i requisiti solo al momento
+     dell'invio. */
+  .hl-password-wrap { position: relative; }
+  .hl-password-wrap .form-control { padding-right: 2.3rem; }
+  .hl-password-toggle {
+    position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--hl-mute); font-size: 0.95rem;
+    padding: 0.25rem; cursor: pointer; line-height: 1;
+  }
+  .hl-password-toggle:hover { color: var(--hl-700); }
+
+  /* Disattiva l'icona "occhio" nativa che Edge (e altri browser
+     Chromium-based) aggiunge automaticamente a ogni campo type="password" —
+     altrimenti si somma alla nostra personalizzata (due icone sovrapposte
+     nella registrazione), o compare/scompare con una logica sua sui campi
+     dove non abbiamo messo alcun controllo personalizzato (il login). */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
+  .hl-password-checklist {
+    list-style: none; padding: 0; margin: 0.5rem 0 0;
+    display: flex; flex-direction: column; gap: 0.2rem;
+  }
+  .hl-password-checklist li {
+    font-size: 0.76rem; color: var(--hl-mute);
+    display: flex; align-items: center; gap: 0.4rem;
+    transition: color 0.15s ease;
+  }
+  .hl-password-checklist li i { font-size: 0.72rem; flex-shrink: 0; }
+  .hl-password-checklist li.ok { color: #1c7a4a; }
+
+  @media (max-width: 480px) {
+    .hl-glass-card { padding: 1.3rem 1.2rem; max-width: 100%; }
+    .hl-glass-card.hl-wide { max-width: 100%; }
+    .hl-hero-title { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hl-topbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="home.html" class="hl-brand">
+      <span class="hl-brand-mark">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 13h4l2-7 3 14 3-10 2 3h6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="hl-brand-name">HealthLab</span>
+    </a>
+    <a href="home.html" class="hl-back-home"><i class="bi bi-arrow-left me-1"></i>Torna al sito</a>
+  </div>
+</div>
+
+<main class="hl-login-hero">
+  <div class="hl-bg-image">
+    <img
+      src="img/login/login-2400px.webp"
+      srcset="img/login/login-1080px.webp 1080w,
+              img/login/login-2400px.webp 2400w"
+      sizes="100vw"
+      alt="">
+  </div>
+  <div class="hl-bg-overlay"></div>
+
+  <div class="hl-glass-card" id="glassCard">
+  <div id="authPanelsWrapper">
+
+    <!-- ===== PANNELLO: ACCEDI ===== -->
+    <div class="hl-auth-panel" id="panelLogin">
+      <span class="hl-hero-badge">Area riservata</span>
+      <h1 class="hl-hero-title">Accedi</h1>
+      <p class="hl-hero-sub">Inserisci le tue credenziali per continuare.</p>
+
+      <div id="loginError" class="hl-alert" role="alert"></div>
+
+      <form id="loginForm" novalidate>
+        <div class="hl-field">
+          <label for="username" class="form-label">Nome utente</label>
+          <input type="text" class="form-control" id="username" name="username" autocomplete="username" required>
+        </div>
+        <div class="hl-field hl-field-last">
+          <label for="password" class="form-label">Password</label>
+          <div class="hl-password-wrap">
+            <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
+            <button type="button" class="hl-password-toggle" id="btnMostraPasswordLogin" tabindex="-1" aria-label="Mostra password">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="hl-btn-primary" id="loginSubmit">
+          Accedi
+        </button>
+      </form>
+
+      <div class="hl-footer-links-sep">
+        <p class="hl-footer-link">Non hai ancora un account? <button type="button" id="btnVaiRegistrati">Registrati</button></p>
+        <p class="hl-footer-link">Hai dimenticato la password? <button type="button" id="btnVaiPasswordDimenticata">Reimpostala</button></p>
+      </div>
+    </div>
+
+    <!-- ===== PANNELLO: PASSWORD DIMENTICATA ===== -->
+    <div class="hl-auth-panel hl-panel-hidden" id="panelForgot" hidden>
+      <span class="hl-hero-badge">Recupero accesso</span>
+      <h1 class="hl-hero-title" id="forgotTitle">Password dimenticata?</h1>
+      <p class="hl-hero-sub" id="forgotSub">Inserisci la tua email: se è registrata, ti invieremo un link per reimpostare la password.</p>
+
+      <div id="forgotError" class="hl-alert" role="alert"></div>
+      <div id="forgotSuccess" class="hl-alert-success" role="status"></div>
+
+      <form id="forgotForm" novalidate>
+        <div class="hl-field hl-field-last">
+          <label for="forgotEmail" class="form-label">Email</label>
+          <input type="email" class="form-control" id="forgotEmail" name="email" autocomplete="email" required>
+        </div>
+        <button type="submit" class="hl-btn-primary" id="forgotSubmit">Invia link di reset</button>
+      </form>
+
+      <div class="hl-footer-links-sep">
+        <p class="hl-footer-link"><button type="button" id="btnForgotTornaLogin"><i class="bi bi-arrow-left me-1"></i>Torna al login</button></p>
+      </div>
+    </div>
+
+    <!-- ===== PANNELLO: REGISTRAZIONE ===== -->
+    <div class="hl-auth-panel hl-panel-hidden" id="panelRegister" hidden>
+      <div class="hl-panel-fixed-header">
+        <h1 class="hl-hero-title" id="regTitle">Crea il tuo account</h1>
+        <p class="hl-hero-sub" id="regSub">Registrati per prenotare esami e visite online.</p>
+      </div>
+
+      <div class="hl-panel-scroll-body">
+        <div id="regError" class="hl-alert" role="alert"></div>
+
+        <form id="regForm" novalidate>
+          <div class="row g-2">
+            <div class="col-6 hl-field">
+              <label for="regNome" class="form-label">Nome</label>
+              <input type="text" class="form-control" id="regNome" autocomplete="given-name" required>
+            </div>
+            <div class="col-6 hl-field">
+              <label for="regCognome" class="form-label">Cognome</label>
+              <input type="text" class="form-control" id="regCognome" autocomplete="family-name" required>
+            </div>
+          </div>
+
+          <div class="hl-field">
+            <label for="regUsername" class="form-label">Nome utente</label>
+            <input type="text" class="form-control" id="regUsername" autocomplete="username" required>
+          </div>
+          <div class="hl-field">
+            <label for="regTelefono" class="form-label">Numero di telefono</label>
+            <input type="tel" class="form-control" id="regTelefono" autocomplete="tel" required>
+          </div>
+          <div class="hl-field">
+            <label for="regEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="regEmail" autocomplete="email" required>
+          </div>
+
+          <div class="hl-field">
+            <label for="regPassword" class="form-label">Password</label>
+            <div class="hl-password-wrap">
+              <input type="password" class="form-control" id="regPassword" autocomplete="new-password" required>
+              <button type="button" class="hl-password-toggle" id="btnMostraPassword" tabindex="-1" aria-label="Mostra password">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <ul class="hl-password-checklist" id="passwordChecklist">
+              <li data-regola="lunghezza"><i class="bi bi-circle"></i> Almeno 8 caratteri</li>
+              <li data-regola="maiuscola"><i class="bi bi-circle"></i> Una lettera maiuscola</li>
+              <li data-regola="minuscola"><i class="bi bi-circle"></i> Una lettera minuscola</li>
+              <li data-regola="numero"><i class="bi bi-circle"></i> Un numero</li>
+              <li data-regola="speciale"><i class="bi bi-circle"></i> Un carattere speciale (es. ! @ # $)</li>
+            </ul>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6 hl-field">
+              <label for="regDataNascita" class="form-label">Data di nascita</label>
+              <input type="date" class="form-control" id="regDataNascita" autocomplete="bday" required>
+            </div>
+            <div class="col-6 hl-field">
+              <label for="regSesso" class="form-label">Sesso</label>
+              <select class="form-select" id="regSesso" required>
+                <option value="" disabled selected>Seleziona</option>
+                <option value="M">Maschio</option>
+                <option value="F">Femmina</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="hl-field-last">
+            <label for="regCodiceFiscale" class="form-label">Codice fiscale (facoltativo)</label>
+            <input type="text" class="form-control" id="regCodiceFiscale">
+          </div>
+
+          <button type="submit" class="hl-btn-primary" id="regSubmit">Crea account</button>
+        </form>
+
+        <div class="hl-footer-links-sep">
+          <p class="hl-footer-link">Hai già un account? <button type="button" id="btnRegTornaLogin">Accedi</button></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+<script>
+  const API_BASE_URL = 'http://localhost:8080/api';
+
+  // ===== Sicurezza: redirect solo verso percorsi relativi locali =====
+  function redirectSicuro(valore) {
+    if (!valore) return null;
+    if (/^([a-z][a-z0-9+.-]*:)?\/\//i.test(valore) || valore.trim().startsWith('//')) {
+      return null;
+    }
+    return valore;
+  }
+
+  (function redirectSeGiaLoggato() {
+    const token = localStorage.getItem('healthlab_token');
+    if (!token) return;
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = redirectSicuro(params.get('redirect'));
+    window.location.href = redirectTo || 'home-interna.html';
+  })();
+
+  const glassCard = document.getElementById('glassCard');
+  const authPanelsWrapper = document.getElementById('authPanelsWrapper');
+  const pannelli = {
+    login: document.getElementById('panelLogin'),
+    forgot: document.getElementById('panelForgot'),
+    register: document.getElementById('panelRegister')
+  };
+
+  // Il contenitore parte con l'altezza del pannello inizialmente visibile
+  // (login) impostata esplicitamente — essendo i pannelli tutti
+  // position:absolute, senza questo il contenitore collasserebbe a
+  // un'altezza di zero fin dal primo caricamento.
+  authPanelsWrapper.style.height = pannelli.login.scrollHeight + 'px';
+
+  function primoCampo(pannelloEl) {
+    return pannelloEl.querySelector('input, select, button[type="submit"]');
+  }
+
+  function pulisciCampi(pannelloEl) {
+    pannelloEl.querySelectorAll('input').forEach(input => {
+      if (input.type === 'date') return;
+      input.value = '';
+      input.classList.remove('field-error');
+    });
+    pannelloEl.querySelectorAll('select').forEach(sel => { sel.selectedIndex = 0; });
+    pannelloEl.querySelectorAll('.hl-alert, .hl-alert-success').forEach(box => {
+      box.classList.remove('show');
+      box.textContent = '';
+    });
+
+    // Il form "password dimenticata" ha un comportamento particolare: dopo un
+    // invio riuscito viene nascosto con display:'none' al posto del messaggio
+    // di successo (non è una normale .hl-alert,). 
+    // Se non lo ripristiniamo qui — sull'uscita dal pannello, non
+    // sull'ingresso — la prossima volta che si entra mostraPannello() misura
+    // l'altezza mentre il form è ancora nascosto: il contenitore si anima
+    // verso un'altezza troppo bassa, e il form ricompare dopo, tagliato o
+    // fuori posto.
+    const formPasswordDimenticata = pannelloEl.querySelector('#forgotForm');
+    if (formPasswordDimenticata) formPasswordDimenticata.style.display = '';
+
+    // Stesso identico ripristino per la registrazione — anche qui il form
+    // viene nascosto dopo un invio riuscito (sostituito dal messaggio
+    // "Controlla la tua email"), quindi va rimesso a posto sull'uscita dal
+    // pannello, non sull'ingresso, per lo stesso motivo di sopra.
+    const formRegistrazione = pannelloEl.querySelector('#regForm');
+    if (formRegistrazione) {
+      formRegistrazione.style.display = '';
+      const titoloReg = pannelloEl.querySelector('#regTitle');
+      const sottotitoloReg = pannelloEl.querySelector('#regSub');
+      if (titoloReg) titoloReg.textContent = 'Crea il tuo account';
+      if (sottotitoloReg) sottotitoloReg.textContent = 'Registrati per prenotare esami e visite online.';
+    }
+
+    // Ripristino anche la checklist password e il pulsante mostra/nascondi —
+    // senza questo, tornando sul pannello si vedrebbero ancora i segni di
+    // spunta di un tentativo precedente, o il campo rimasto in chiaro.
+    const campoPassword = pannelloEl.querySelector('#regPassword');
+    if (campoPassword) {
+      campoPassword.type = 'password';
+      const iconaOcchio = pannelloEl.querySelector('#btnMostraPassword i');
+      if (iconaOcchio) iconaOcchio.className = 'bi bi-eye';
+      aggiornaChecklistPassword();
+    }
+
+    // Stesso ripristino per il campo password del login — qui non c'è
+    // checklist da azzerare, solo la visibilità del testo.
+    const campoPasswordLogin = pannelloEl.querySelector('#password');
+    if (campoPasswordLogin) {
+      campoPasswordLogin.type = 'password';
+      const iconaOcchioLogin = pannelloEl.querySelector('#btnMostraPasswordLogin i');
+      if (iconaOcchioLogin) iconaOcchioLogin.className = 'bi bi-eye';
+    }
+  }
+
+  // Ricalcola e anima l'altezza del contenitore in base al contenuto attuale
+  // del pannello indicato (o di quello visibile, se non specificato) — serve
+  // sia quando si passa da un pannello all'altro, sia quando il contenuto
+  // dello stesso pannello cambia (es. il form di registrazione che sparisce
+  // dopo l'invio, sostituito dal messaggio "Controlla la tua email": senza
+  // richiamare questa funzione anche lì, il contenitore resterebbe fermo
+  // alla vecchia altezza, più alta del necessario, lasciando uno spazio
+  // vuoto sotto il messaggio).
+  function aggiornaAltezzaWrapper(pannelloEl) {
+    const target = pannelloEl || Object.values(pannelli).find(p => !p.hidden);
+    if (!target) return;
+    authPanelsWrapper.style.height = target.scrollHeight + 'px';
+  }
+
+  function mostraPannello(nome) {
+    const attuale = Object.values(pannelli).find(p => !p.hidden);
+    const nuovo = pannelli[nome];
+    if (attuale === nuovo) return;
+
+    glassCard.classList.toggle('hl-wide', nome === 'register');
+
+    // Il nuovo pannello va reso "presente" (hidden=false) PRIMA di poterne
+    // misurare l'altezza reale — essendo position:absolute, questo non
+    // sposta né allarga nient'altro nel frattempo (resta comunque invisibile,
+    // .hl-panel-hidden è già lì di default con opacity:0).
+    nuovo.hidden = false;
+
+    // Forziamo il reflow prima di applicare la nuova altezza al contenitore:
+    // senza questo il browser rischia di "saltare" subito al valore finale,
+    // saltando l'animazione.
+    void authPanelsWrapper.offsetHeight;
+    aggiornaAltezzaWrapper(nuovo);
+
+    if (attuale) {
+      attuale.classList.add('hl-panel-hidden');
+      setTimeout(() => {
+        attuale.hidden = true;
+        pulisciCampi(attuale);
+      }, 380);
+    }
+
+    requestAnimationFrame(() => {
+      nuovo.classList.remove('hl-panel-hidden');
+      const campo = primoCampo(nuovo);
+      if (campo) campo.focus({ preventScroll: true });
+    });
+  }
+
+  document.getElementById('btnVaiRegistrati').addEventListener('click', () => mostraPannello('register'));
+  document.getElementById('btnVaiPasswordDimenticata').addEventListener('click', () => mostraPannello('forgot'));
+  document.getElementById('btnForgotTornaLogin').addEventListener('click', () => mostraPannello('login'));
+  document.getElementById('btnRegTornaLogin').addEventListener('click', () => mostraPannello('login'));
+
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const loginSubmit = document.getElementById('loginSubmit');
+
+  function showLoginError(message) {
+    loginError.textContent = message;
+    loginError.classList.add('show');
+    aggiornaAltezzaWrapper();
+  }
+  function hideLoginError() {
+    loginError.classList.remove('show');
+    loginError.textContent = '';
+  }
+
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    hideLoginError();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+      showLoginError('Inserisci nome utente e password.');
+      return;
+    }
+
+    loginSubmit.disabled = true;
+    loginSubmit.textContent = 'Accesso in corso...';
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, { username, password });
+
+      localStorage.setItem('healthlab_token', response.data.token);
+      localStorage.setItem('healthlab_ruolo', response.data.ruolo);
+      localStorage.setItem('healthlab_id_utente', response.data.idUtente);
+      localStorage.setItem('healthlab_nome', response.data.nome);
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = redirectSicuro(params.get('redirect'));
+      window.location.href = redirectTo || 'home-interna.html';
+
+    } catch (error) {
+      if (error.response) {
+        showLoginError(error.response.data?.message || 'Nome utente o password non corretti.');
+      } else if (error.request) {
+        showLoginError('Impossibile contattare il server. Verifica che il backend sia attivo.');
+      } else {
+        showLoginError('Si è verificato un errore imprevisto. Riprova.');
+      }
+    } finally {
+      loginSubmit.disabled = false;
+      loginSubmit.textContent = 'Accedi';
+    }
+  });
+
+  const forgotForm = document.getElementById('forgotForm');
+  const forgotError = document.getElementById('forgotError');
+  const forgotSuccess = document.getElementById('forgotSuccess');
+  const forgotSubmit = document.getElementById('forgotSubmit');
+
+  forgotForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    forgotError.classList.remove('show');
+    forgotSuccess.classList.remove('show');
+
+    const email = document.getElementById('forgotEmail').value.trim();
+    forgotSubmit.disabled = true;
+    forgotSubmit.textContent = 'Invio in corso…';
+
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/password-dimenticata`, { email });
+      forgotForm.style.display = 'none';
+      forgotSuccess.textContent = res.data.message;
+      forgotSuccess.classList.add('show');
+      aggiornaAltezzaWrapper();
+    } catch (error) {
+      forgotError.textContent = error.response?.data?.message || 'Errore imprevisto. Riprova.';
+      forgotError.classList.add('show');
+      aggiornaAltezzaWrapper();
+    } finally {
+      forgotSubmit.disabled = false;
+      forgotSubmit.textContent = 'Invia link di reset';
+    }
+  });
+
+  const regForm = document.getElementById('regForm');
+  const regError = document.getElementById('regError');
+  const regSubmit = document.getElementById('regSubmit');
+
+  function showRegError(msg) {
+    regError.textContent = msg;
+    regError.classList.add('show');
+    aggiornaAltezzaWrapper();
+  }
+  function hideRegError() {
+    regError.classList.remove('show');
+  }
+
+  const fieldErrorTimeouts = {};
+  function evidenziaCampo(id) {
+    const el = document.getElementById(id);
+    el.classList.add('field-error');
+    if (fieldErrorTimeouts[id]) clearTimeout(fieldErrorTimeouts[id]);
+    fieldErrorTimeouts[id] = setTimeout(() => el.classList.remove('field-error'), 5000);
+  }
+
+  function pulisciTuttiICampiReg() {
+    ['regNome', 'regCognome', 'regUsername', 'regTelefono', 'regEmail', 'regPassword', 'regDataNascita', 'regSesso', 'regCodiceFiscale']
+      .forEach(id => document.getElementById(id).classList.remove('field-error'));
+  }
+
+  // ===== Password: requisiti di sicurezza =====
+  // Stessi identici criteri applicati anche lato server (AuthService.
+  // validaRobustezzaPassword) — questa checklist è solo un riscontro
+  // immediato per l'utente, non è lei a proteggere l'applicazione: chiunque
+  // chiamasse l'API di registrazione direttamente, bypassando il sito,
+  // dovrebbe comunque passare dal controllo server-side.
+  const regPasswordInput = document.getElementById('regPassword');
+  const checklistPasswordItems = document.querySelectorAll('#passwordChecklist li');
+
+  const regolePassword = {
+    lunghezza: (v) => v.length >= 8,
+    maiuscola: (v) => /[A-Z]/.test(v),
+    minuscola: (v) => /[a-z]/.test(v),
+    numero: (v) => /[0-9]/.test(v),
+    speciale: (v) => /[!@#$%^&*()\-_=+\[\]{};:,.<>?/\\|`~]/.test(v)
+  };
+
+  function passwordSoddisfaTuttiCriteri(valore) {
+    return Object.values(regolePassword).every(fn => fn(valore || ''));
+  }
+
+  function aggiornaChecklistPassword() {
+    const valore = regPasswordInput.value;
+    checklistPasswordItems.forEach(li => {
+      const regola = li.dataset.regola;
+      const ok = regolePassword[regola](valore);
+      const icona = li.querySelector('i');
+      li.classList.toggle('ok', ok);
+      icona.className = ok ? 'bi bi-check-circle-fill' : 'bi bi-circle';
+    });
+  }
+
+  regPasswordInput.addEventListener('input', aggiornaChecklistPassword);
+
+  // Riusabile: stesso comportamento per qualunque coppia campo/pulsante —
+  // usata sia per il login (nessuna checklist, solo il toggle) sia per la
+  // registrazione, invece di duplicare la stessa logica due volte.
+  function collegaToggleMostraPassword(idCampo, idBottone) {
+    const campo = document.getElementById(idCampo);
+    const bottone = document.getElementById(idBottone);
+    bottone.addEventListener('click', () => {
+      const nuovoTipo = campo.type === 'password' ? 'text' : 'password';
+      campo.type = nuovoTipo;
+      const icona = bottone.querySelector('i');
+      icona.className = nuovoTipo === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+  }
+
+  collegaToggleMostraPassword('password', 'btnMostraPasswordLogin');
+  collegaToggleMostraPassword('regPassword', 'btnMostraPassword');
+
+  const REGEX_CODICE_FISCALE = /^[A-Za-z]{6}[0-9]{2}[A-Za-z]{1}[0-9]{2}[A-Za-z]{1}[0-9]{3}[A-Za-z]{1}$/;
+  const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function calcolaEta(dataNascitaStr) {
+    const oggi = new Date();
+    const nascita = new Date(dataNascitaStr);
+    let eta = oggi.getFullYear() - nascita.getFullYear();
+    const meseNonAncoraCompiuto =
+      oggi.getMonth() < nascita.getMonth() ||
+      (oggi.getMonth() === nascita.getMonth() && oggi.getDate() < nascita.getDate());
+    if (meseNonAncoraCompiuto) eta--;
+    return eta;
+  }
+
+  function validaFormReg(dati) {
+    const campiObbligatori = [
+      { id: 'regNome', valore: dati.nome, etichetta: 'Nome' },
+      { id: 'regCognome', valore: dati.cognome, etichetta: 'Cognome' },
+      { id: 'regUsername', valore: dati.username, etichetta: 'Nome utente' },
+      { id: 'regTelefono', valore: dati.telefono, etichetta: 'Numero di telefono' },
+      { id: 'regEmail', valore: dati.email, etichetta: 'Email' },
+      { id: 'regPassword', valore: dati.password, etichetta: 'Password' },
+      { id: 'regDataNascita', valore: dati.dataNascita, etichetta: 'Data di nascita' },
+      { id: 'regSesso', valore: dati.sesso, etichetta: 'Sesso' }
+    ];
+
+    const etichetteErrate = [];
+    const campiDaEvidenziare = [];
+
+    campiObbligatori.forEach(campo => {
+      if (!campo.valore) {
+        etichetteErrate.push(campo.etichetta);
+        campiDaEvidenziare.push(campo.id);
+      }
+    });
+
+    if (dati.email && !REGEX_EMAIL.test(dati.email)) {
+      if (!campiDaEvidenziare.includes('regEmail')) {
+        etichetteErrate.push('Email');
+        campiDaEvidenziare.push('regEmail');
+      }
+    }
+
+    // Password non vuota, ma che non rispetta tutti i requisiti — messaggio
+    // separato da "campo vuoto", per non confondere chi l'ha già compilata
+    if (dati.password && !passwordSoddisfaTuttiCriteri(dati.password)) {
+      etichetteErrate.push('Password (non rispetta tutti i requisiti richiesti)');
+      campiDaEvidenziare.push('regPassword');
+    }
+
+    if (dati.dataNascita && calcolaEta(dati.dataNascita) < 18) {
+      if (!campiDaEvidenziare.includes('regDataNascita')) {
+        etichetteErrate.push('Data di nascita (minorenne)');
+        campiDaEvidenziare.push('regDataNascita');
+      }
+    }
+
+    if (dati.codiceFiscale && !REGEX_CODICE_FISCALE.test(dati.codiceFiscale)) {
+      etichetteErrate.push('Codice fiscale');
+      campiDaEvidenziare.push('regCodiceFiscale');
+    }
+
+    return { etichetteErrate, campiDaEvidenziare };
+  }
+
+  regForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideRegError();
+    pulisciTuttiICampiReg();
+
+    const payload = {
+      nome: document.getElementById('regNome').value.trim(),
+      cognome: document.getElementById('regCognome').value.trim(),
+      username: document.getElementById('regUsername').value.trim(),
+      telefono: document.getElementById('regTelefono').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      password: document.getElementById('regPassword').value,
+      dataNascita: document.getElementById('regDataNascita').value,
+      sesso: document.getElementById('regSesso').value,
+      codiceFiscale: document.getElementById('regCodiceFiscale').value.trim() || null
+    };
+
+    const { etichetteErrate, campiDaEvidenziare } = validaFormReg(payload);
+
+    if (etichetteErrate.length > 0) {
+      campiDaEvidenziare.forEach(id => evidenziaCampo(id));
+      showRegError(`I seguenti campi risultano non compilati o errati: ${etichetteErrate.join(', ')}.`);
+      return;
+    }
+
+    regSubmit.disabled = true;
+    regSubmit.textContent = 'Creazione account…';
+
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/registrazione`, payload);
+
+      const headerEl = document.querySelector('#panelRegister .hl-panel-fixed-header');
+
+      // Dissolvenza morbida invece di uno scatto secco: form e intestazione
+      // spariscono insieme, il contenuto cambia, poi l'intestazione riappare
+      // col nuovo testo — stessa durata (380ms) e curva già usate per il
+      // passaggio tra pannelli, per coerenza.
+      regForm.style.transition = 'opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1)';
+      headerEl.style.transition = 'opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1)';
+      regForm.style.opacity = '0';
+      headerEl.style.opacity = '0';
+
+      await new Promise(risolvi => setTimeout(risolvi, 380));
+
+      regForm.style.display = 'none';
+      document.getElementById('regTitle').textContent = 'Controlla la tua email';
+      document.getElementById('regSub').innerHTML =
+        `Un'email di verifica è stata inviata a <strong>${res.data.email}</strong>. Clicca sul link contenuto nel messaggio per confermare il tuo account.`;
+      aggiornaAltezzaWrapper();
+
+      // Forziamo il reflow prima di far ricomparire l'intestazione, altrimenti
+      // il browser salterebbe subito allo stato finale senza animare nulla.
+      void headerEl.offsetHeight;
+      headerEl.style.opacity = '1';
+    } catch (error) {
+      const message = error.response?.data?.message || 'Impossibile completare la registrazione. Riprova.';
+      if (message.includes('Nome utente')) evidenziaCampo('regUsername');
+      else if (message.includes('Email')) evidenziaCampo('regEmail');
+      else if (message.toLowerCase().includes('password')) evidenziaCampo('regPassword');
+      showRegError(message);
+    } finally {
+      regSubmit.disabled = false;
+      regSubmit.textContent = 'Crea account';
+    }
+  });
+
+  (function impostaLimiteEtaCalendario() {
+    const oggi = new Date();
+    const diciottoAnniFa = new Date(oggi.getFullYear() - 18, oggi.getMonth(), oggi.getDate());
+    const yyyy = diciottoAnniFa.getFullYear();
+    const mm = String(diciottoAnniFa.getMonth() + 1).padStart(2, '0');
+    const dd = String(diciottoAnniFa.getDate()).padStart(2, '0');
+    document.getElementById('regDataNascita').max = `${yyyy}-${mm}-${dd}`;
+  })();
+</script>
+
+<script>
+  // ===== Motore "Liquid Glass"  =====
+  (function () {
+    'use strict';
+
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+
+    let defs = null;
+    function ensureDefs() {
+      const old = document.getElementById('lg-defs');
+      if (old) { defs = old; return; }
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '0');
+      svg.setAttribute('height', '0');
+      svg.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:-1;';
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.id = 'lg-defs';
+      svg.appendChild(defs);
+      document.documentElement.appendChild(svg);
+    }
+
+    function surfaceFn(x) { return Math.pow(1 - Math.pow(1 - x, 4), 0.25); }
+
+    function calcRefractionProfile(glassThickness, bezelWidth, ior, samples) {
+      samples = samples || 128;
+      const eta = 1 / ior;
+      function refract(nx, ny) {
+        const dot = ny;
+        const k = 1 - eta * eta * (1 - dot * dot);
+        if (k < 0) return null;
+        const sq = Math.sqrt(k);
+        return [-(eta * dot + sq) * nx, eta - (eta * dot + sq) * ny];
+      }
+      const p = new Float64Array(samples);
+      for (let i = 0; i < samples; i++) {
+        const x = i / samples;
+        const y = surfaceFn(x);
+        const dx = x < 1 ? 0.0001 : -0.0001;
+        const y2 = surfaceFn(x + dx);
+        const deriv = (y2 - y) / dx;
+        const mag = Math.sqrt(deriv * deriv + 1);
+        const ref = refract(-deriv / mag, -1 / mag);
+        p[i] = ref ? ref[0] * ((y * bezelWidth + glassThickness) / ref[1]) : 0;
+      }
+      return p;
+    }
+
+    function generateDisplacementMap(w, h, radius, bezelWidth, profile, maxDisp) {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(w, h);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) { d[i] = 128; d[i + 1] = 128; d[i + 2] = 0; d[i + 3] = 255; }
+      const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+      const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+      const wB = w - r * 2, hB = h - r * 2, S = profile.length;
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+          const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+          const dSq = x * x + y * y;
+          if (dSq > r1Sq || dSq < rBSq) continue;
+          const dist = Math.sqrt(dSq);
+          const fromSide = r - dist;
+          const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+          if (op <= 0 || dist === 0) continue;
+          const cos = x / dist, sin = y / dist;
+          const bi = Math.min(((fromSide / bezelWidth) * S) | 0, S - 1);
+          const disp = profile[bi] || 0;
+          const dX = (-cos * disp) / maxDisp, dY = (-sin * disp) / maxDisp;
+          const idx = (y1 * w + x1) * 4;
+          d[idx] = (128 + dX * 127 * op + 0.5) | 0;
+          d[idx + 1] = (128 + dY * 127 * op + 0.5) | 0;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL();
+    }
+
+    function generateSpecularMap(w, h, radius, bezelWidth, balanced) {
+      const angle = Math.PI / 3;
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(w, h);
+      const d = img.data; d.fill(0);
+      const r = radius, rSq = r * r, r1Sq = (r + 1) ** 2;
+      const rBSq = Math.max(r - bezelWidth, 0) ** 2;
+      const wB = w - r * 2, hB = h - r * 2;
+      const sv = [Math.cos(angle), Math.sin(angle)];
+      for (let y1 = 0; y1 < h; y1++) {
+        for (let x1 = 0; x1 < w; x1++) {
+          const x = x1 < r ? x1 - r : x1 >= w - r ? x1 - r - wB : 0;
+          const y = y1 < r ? y1 - r : y1 >= h - r ? y1 - r - hB : 0;
+          const dSq = x * x + y * y;
+          if (dSq > r1Sq || dSq < rBSq) continue;
+          const dist = Math.sqrt(dSq);
+          const fromSide = r - dist;
+          const op = dSq < rSq ? 1 : 1 - (dist - Math.sqrt(rSq)) / (Math.sqrt(r1Sq) - Math.sqrt(rSq));
+          if (op <= 0 || dist === 0) continue;
+          const cos = x / dist, sin = -y / dist;
+          const dot = balanced ? 1 : Math.abs(cos * sv[0] + sin * sv[1]);
+          const edge = Math.sqrt(Math.max(0, 1 - (1 - fromSide) ** 2));
+          const coeff = dot * edge;
+          const col = (255 * coeff) | 0;
+          const alpha = (col * coeff * op) | 0;
+          const idx = (y1 * w + x1) * 4;
+          d[idx] = col; d[idx + 1] = col; d[idx + 2] = col; d[idx + 3] = alpha;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL();
+    }
+
+    function buildFilter(id, w, h, radius, cfg) {
+      const bezel = Math.min(cfg.bezelWidth, radius - 1, Math.min(w, h) / 2 - 1);
+      const profile = calcRefractionProfile(cfg.glassThickness, bezel, cfg.ior, 128);
+      const maxDisp = Math.max(...Array.from(profile).map(Math.abs)) || 1;
+      const dispUrl = generateDisplacementMap(w, h, radius, bezel, profile, maxDisp);
+      const specUrl = generateSpecularMap(w, h, radius, bezel * 2.5, !!cfg.balancedSpecular);
+      const scale = maxDisp * cfg.scaleRatio;
+      const filter = svgEl('filter', {
+        id, x: '0', y: '0', width: String(w), height: String(h),
+        filterUnits: 'userSpaceOnUse', primitiveUnits: 'userSpaceOnUse',
+        'color-interpolation-filters': 'sRGB'
+      });
+      const blur = svgEl('feGaussianBlur', { in: 'SourceGraphic', stdDeviation: cfg.blur, result: 'blurred' });
+      const dispImg = svgEl('feImage', { href: dispUrl, x: 0, y: 0, width: w, height: h, result: 'disp_map' });
+      const dispMap = svgEl('feDisplacementMap', {
+        in: 'blurred', in2: 'disp_map', scale,
+        xChannelSelector: 'R', yChannelSelector: 'G', result: 'displaced'
+      });
+      const sat = svgEl('feColorMatrix', { in: 'displaced', type: 'saturate', values: cfg.specularSat, result: 'displaced_sat' });
+      const spec = svgEl('feImage', { href: specUrl, x: 0, y: 0, width: w, height: h, result: 'spec_layer' });
+      const comp = svgEl('feComposite', { in: 'displaced_sat', in2: 'spec_layer', operator: 'in', result: 'spec_masked' });
+      const tr = svgEl('feComponentTransfer', { in: 'spec_layer', result: 'spec_faded' });
+      tr.appendChild(svgEl('feFuncA', { type: 'linear', slope: cfg.specularOpacity }));
+      const b1 = svgEl('feBlend', { in: 'spec_masked', in2: 'displaced', mode: 'normal', result: 'with_sat' });
+      const b2 = svgEl('feBlend', { in: 'spec_faded', in2: 'with_sat', mode: 'normal' });
+      filter.append(blur, dispImg, dispMap, sat, spec, comp, tr, b1, b2);
+      return filter;
+    }
+
+    function applyGlass(el, cfg, tintRgba) {
+      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+
+      const refr = document.createElement('div');
+      refr.className = 'lg-refr-layer';
+      refr.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;';
+
+      const tint = document.createElement('div');
+      tint.className = 'lg-tint-layer';
+      tint.style.cssText = `position:absolute;inset:0;z-index:0;pointer-events:none;background:${tintRgba};`;
+
+      el.insertBefore(tint, el.firstChild);
+      el.insertBefore(refr, el.firstChild);
+
+      let filterNode = null;
+      let timer = null;
+
+      function rebuild() {
+        ensureDefs();
+        const w = Math.round(el.offsetWidth);
+        const h = Math.round(el.offsetHeight);
+        if (w < 4 || h < 4) return;
+        const dataR = parseFloat(el.getAttribute('data-radius') || '0');
+        const r = Math.max(2, Math.min(dataR || 24, w / 2, h / 2));
+        if (filterNode) filterNode.remove();
+        const id = 'lg-' + Math.random().toString(36).slice(2, 10);
+        filterNode = buildFilter(id, w, h, r, cfg);
+        defs.appendChild(filterNode);
+        refr.style.backdropFilter = `url(#${id})`;
+        refr.style.webkitBackdropFilter = `url(#${id})`;
+      }
+
+      function schedule() { clearTimeout(timer); timer = setTimeout(rebuild, 16); }
+
+      new ResizeObserver(schedule).observe(el);
+      rebuild();
+    }
+
+    const supported = window.CSS && CSS.supports && CSS.supports('backdrop-filter', 'url(#x)');
+    const cardEl = document.getElementById('glassCard');
+    cardEl.setAttribute('data-radius', '20');
+
+    if (supported) {
+      applyGlass(cardEl, {
+        glassThickness: 45,
+        bezelWidth: 20,
+        ior: 1.4,
+        scaleRatio: 1,
+        blur: 1,
+        specularOpacity: 0.5,
+        specularSat: 0,
+        balancedSpecular: false
+      }, 'rgba(255,255,255,0.6)');
+    } else {
+      cardEl.classList.add('no-liquid-glass');
+    }
+  })();
+</script>
+
+</body>
+</html>
